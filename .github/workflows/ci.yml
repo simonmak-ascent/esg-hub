@@ -47,6 +47,17 @@ jobs:
       - name: Run unit tests
         run: npx vitest run
 
+      - name: Build MCP server
+        run: cd mcp-server && npm ci && npx tsc
+
+      - name: Verify committed MCP dist is current
+        run: |
+          if ! git diff --quiet -- mcp-server/dist; then
+            echo "::error::mcp-server/dist is stale — run 'cd mcp-server && npx tsc' and commit dist"
+            git --no-pager diff --stat -- mcp-server/dist
+            exit 1
+          fi
+
   eval-search:
     name: "Search Evaluation"
     runs-on: ubuntu-latest
