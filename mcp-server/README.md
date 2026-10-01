@@ -1,83 +1,88 @@
 # ESG Hub MCP Server
 
-A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that provides AI agents with access to the **ESG Hub** knowledge base — 307 articles and 244 curated external resources covering Environmental, Social, and Governance topics.
+A [Model Context Protocol](https://modelcontextprotocol.io/) server that gives AI
+agents access to the **ESG Hub** knowledge base — ESG articles, curated external
+resources, glossary terms, reporting frameworks, the industry taxonomy, and the
+knowledge graph.
 
-## Quick Start
+- **13 tools**, read-only by default (two token-gated write tools on stdio)
+- **stdio** (local) and **Streamable HTTP** (hosted) transports
+- Published as [`@simonmak-ascent/esg-hub-mcp`](https://www.npmjs.com/package/@simonmak-ascent/esg-hub-mcp)
 
-### Claude Desktop
+## Hosted endpoint (no install)
 
-Add to your `claude_desktop_config.json`:
+```
+https://esg-hub.ascent.partners/api/mcp
+```
 
-```json
+opencode / Cursor / any Streamable HTTP client:
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "esg-hub": { "type": "remote", "url": "https://esg-hub.ascent.partners/api/mcp" }
+  }
+}
+```
+
+## Local (stdio)
+
+```jsonc
 {
   "mcpServers": {
-    "esg-hub": {
-      "command": "npx",
-      "args": ["-y", "@esg-hub/mcp-server"]
-    }
+    "esg-hub": { "command": "npx", "args": ["-y", "@simonmak-ascent/esg-hub-mcp"] }
   }
 }
 ```
 
-### Cursor / Windsurf
-
-Add to your MCP settings:
-
-```json
-{
-  "esg-hub": {
-    "command": "npx",
-    "args": ["-y", "@esg-hub/mcp-server"]
-  }
-}
-```
-
-### Manual (from source)
+From source:
 
 ```bash
 cd mcp-server
-pnpm install
-pnpm build
+npm ci && npm run build
 node dist/index.js
 ```
 
-## Available Tools
+## Tools
 
-| Tool | Description | Annotations |
-|------|-------------|-------------|
-| `search_esg` | Full-text keyword search across all ESG content (BM25 ranking) | readOnly, closed-world |
-| `get_esg_page` | Retrieve the full content of a specific ESG article by permalink or slug | readOnly, idempotent |
-| `list_esg_pages` | List/filter ESG articles by section, pillar, or title — paginated | readOnly |
-| `list_esg_resources` | List/filter curated external ESG resources by domain or title — paginated | readOnly |
-| `get_esg_metadata` | Get database statistics (total pages, sections, pillars, domains) | readOnly, idempotent |
+| Tool | Title | What it does | Annotations |
+|------|-------|--------------|-------------|
+| `get_server_info` | Get Server Info | Server version, API base, KB stats — **use this first** | read-only, idempotent |
+| `search_esg` | Search ESG (keyword) | BM25 keyword search across articles + resources | read-only |
+| `search_content` | Search ESG (hybrid) | Semantic + keyword fusion with ESG re-ranking | read-only |
+| `get_esg_page` | Get ESG Article | Full article by permalink/slug/record ID | read-only, idempotent |
+| `list_esg_pages` | List ESG Articles | Browse/filter articles, paginated | read-only |
+| `list_esg_resources` | List External Resources | Curated external resources by domain, paginated | read-only |
+| `get_esg_metadata` | Get Knowledge Base Stats | Sections, pillars, source domains, counts | read-only, idempotent |
+| `get_term` | Get Glossary Term | Term definition + facets | read-only, idempotent |
+| `get_related` | Get Related Content | Knowledge-graph neighbours of a page | read-only |
+| `list_frameworks` | List Reporting Frameworks | GRI, SASB, TCFD, ESRS, CDP, … | read-only |
+| `list_industries` | List Industries | IFRS/SASB-style industry taxonomy | read-only, idempotent |
+| `propose_term` | Propose Glossary Term | Submit a term proposal (human-gated) | write, needs token |
+| `tag_content` | Tag Content Facets | Update a page's facet tags | write, needs token |
 
-### v1.1.0 behaviors
+Every tool returns a human-readable `content` block and a machine-readable
+`structuredContent` payload validated against its declared `outputSchema`.
+Failures return `isError: true` with a structured envelope
+(`{ error: { code, message, retryable, hint } }`).
 
-- **Pagination:** `list_esg_pages` / `list_esg_resources` return `structuredContent.pagination` with `count`, `total`, `offset`, `has_more`, and `next_offset` — pass `next_offset` as the next call's `offset` to page through results.
-- **Structured output:** every tool returns a `structuredContent` payload alongside the human-readable text.
-- **Error envelope:** failures return `isError: true` with `structuredContent.error = { code, message, retryable, hint }` — codes: `NOT_FOUND` (retryable: false), `UPSTREAM_ERROR` (retryable on 5xx/network).
-- **Empty search guidance:** zero-result searches return guidance text suggesting broader terms or browsing by section.
+## Configuration
 
-## Example Prompts
+| Variable | Default | Notes |
+|----------|---------|-------|
+| `ESG_HUB_API_BASE` | `https://esg-hub.ascent.partners` | REST API base |
+| `ESG_HUB_API_URL` | `https://esg-hub.ascent.partners` | Base used for display links |
+| `ESG_HUB_WRITE_TOKEN` | — | Required for `propose_term` / `tag_content` |
 
-Once connected, you can ask your AI assistant questions like:
+## Development
 
-- "What are the key ESG reporting standards?"
-- "Find information about Scope 3 emissions"
-- "List all articles about corporate governance"
-- "What external resources are available from the GRI?"
-- "Explain the TCFD framework using the ESG Hub"
-
-## Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ESG_HUB_API_URL` | `https://esg-hub.ascent.partners` | Base URL of the ESG Hub API |
-
-## API Reference
-
-The MCP server wraps the ESG Hub REST API v1. See the [API Documentation](https://esg-hub.ascent.partners/developers/api) for full endpoint details.
+```bash
+npm ci
+npm run build
+node scripts/smoke.mjs https://esg-hub.ascent.partners   # contract smoke test
+```
 
 ## License
 
-MIT — Content from the ESG Hub is licensed under CC BY-SA 4.0 by Ascent Partners Foundation.
+MIT — content from the ESG Hub is licensed CC BY-SA 4.0 by Ascent Partners Foundation.

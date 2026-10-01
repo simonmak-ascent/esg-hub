@@ -111,6 +111,13 @@ jobs:
           BASE_URL: ${{ steps.deploy.outputs.deploy_url }}
           CI: "true"
 
+      - name: MCP contract smoke (stdio vs production API)
+        working-directory: mcp-server
+        run: |
+          npm ci
+          npm run build
+          node scripts/smoke.mjs "https://esg-hub.ascent.partners"
+
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v7
