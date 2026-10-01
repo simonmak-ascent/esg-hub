@@ -39,4 +39,10 @@ jobs:
         run: ./mcp-publisher login github --token ${{ secrets.SIMONPLMAK_CLOUD_PAT }}
 
       - name: Publish to MCP Registry
-        run: ./mcp-publisher publish
+        run: |
+          for i in 1 2 3 4 5; do
+            if ./mcp-publisher publish; then exit 0; fi
+            echo "Attempt $i failed (likely npm propagation); retrying in 30s..."
+            sleep 30
+          done
+          exit 1

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.2
+
+- Release re-cut: npm had staged 1.3.1 (publish conflict) and the registry
+  publish raced npm propagation. No code changes.
+
 ## 1.3.1
 
 - Registry metadata: shorten `server.json` description to the MCP Registry's

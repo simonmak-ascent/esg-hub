@@ -5,7 +5,7 @@ const BASE_URL = process.env.ESG_HUB_API_URL || "https://esg-hub.ascent.partners
 const API_BASE = process.env.ESG_HUB_API_BASE || BASE_URL;
 const WRITE_TOKEN = process.env.ESG_HUB_WRITE_TOKEN || "";
 const SERVER_NAME = "esg-hub";
-const SERVER_VERSION = "1.3.1";
+const SERVER_VERSION = "1.3.2";
 
 /**
  * Helper to call the ESG Hub REST API
