@@ -232,7 +232,14 @@ export default async function ContentPage({ params }: PageProps) {
                   href={`/${locale}/${page.section}`}
                   style={{ color: "var(--color-link)", textDecoration: "none" }}
                 >
-                {tSectionLabels(page.section as never) || page.section.charAt(0).toUpperCase() + page.section.slice(1)}
+                {(() => {
+                  const fallback = page.section.charAt(0).toUpperCase() + page.section.slice(1);
+                  try {
+                    return tSectionLabels.has(page.section) ? tSectionLabels(page.section) : fallback;
+                  } catch {
+                    return fallback;
+                  }
+                })()}
               </Link>
             </span>
           )}
