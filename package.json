@@ -14,6 +14,8 @@
   },
   "dependencies": {
     "@huggingface/transformers": "^3.8.1",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@simonmak-ascent/esg-hub-mcp": "file:./mcp-server",
     "@simonplmak-cloud/utils": "1.1.0",
     "@simonplmak-cloud/validation": "1.1.0",
     "clsx": "^2.1.1",

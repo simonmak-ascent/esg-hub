@@ -5,6 +5,7 @@ const withNextIntl = createNextIntlPlugin();
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
+  transpilePackages: ["@simonmak-ascent/esg-hub-mcp"],
   reactStrictMode: true,
   outputFileTracingExcludes: {
     "*": [
@@ -31,6 +32,7 @@ const nextConfig = {
     "onnxruntime-node",
     "sharp",
     "@huggingface/transformers",
+    "@modelcontextprotocol/sdk",
   ],
   webpack: (config, { isServer }) => {
     if (isServer) {
