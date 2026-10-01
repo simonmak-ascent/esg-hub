@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
       },
       {
         name: "term",
-        select: "id, term AS title, definition AS description, updated_at",
+        select: "id, name AS title, definition AS description, updated_at",
         ftsWhere: `term @0@ '${escaped}' OR definition @1@ '${escaped}'`,
         limit: 5,
       },
@@ -132,8 +132,8 @@ export async function GET(request: NextRequest) {
         limit: 5,
       },
       {
-        name: "industry",
-        select: "id, name AS title, description, updated_at",
+        name: "industries",
+        select: "id, name_en AS title, updated_at",
         ftsWhere: `name @0@ '${escaped}' OR description @1@ '${escaped}'`,
         limit: 5,
       },
@@ -279,7 +279,7 @@ export async function GET(request: NextRequest) {
       page: 0.6,
       term: 0.4,
       framework: 0.7,
-      industry: 0.4,
+      industries: 0.4,
       entity: 0.4,
       external_resource: 0.5,
     };

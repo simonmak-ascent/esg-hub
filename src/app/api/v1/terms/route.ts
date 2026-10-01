@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-export const dynamic = "force-static";
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 import { queryHttp, sanitize, sanitizeInt } from "@/lib/surrealdb";
 import { requireWriteToken } from "@/lib/auth/write-token";
