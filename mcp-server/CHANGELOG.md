@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.1
+
+- Registry metadata: shorten `server.json` description to the MCP Registry's
+  100-character limit. No tool or API changes.
+
 ## 1.3.0
 
 - **Tool contracts reconciled with the live REST API.** `search_content` reads
