@@ -56,25 +56,39 @@ async function search(query, mode = "keyword") {
 }
 
 /**
- * Normalize a result ID for matching.
- * Handles SurrealDB record IDs (page:xxx), permalink paths, and full URLs.
+ * Slugify a title for matching.
  */
-function normalizeId(id) {
-  if (!id) return null;
-  if (id.startsWith("page:") || id.startsWith("term:") || id.startsWith("framework:")) {
-    return id;
-  }
-  return null;
+function slugify(s) {
+  return String(s)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 /**
- * Check if a result ID matches any relevant ID.
+ * Candidate match keys for a result: record ID, permalink's last path segment,
+ * and the slugified title. Ground-truth labels are slugs (e.g. `page:tcfd`), so
+ * matching by permalink/title slug is what actually resolves.
  */
-function isRelevant(resultId, relevantSet) {
-  const norm = normalizeId(resultId);
-  if (!norm) return false;
+function resultKeys(r) {
+  const keys = new Set();
+  if (r.id) keys.add(r.id);
+  if (r.permalink) {
+    const seg = String(r.permalink).replace(/\/+$/, "").split("/").pop();
+    if (seg) keys.add(seg);
+  }
+  if (r.title) keys.add(slugify(r.title));
+  return keys;
+}
+
+/**
+ * Check if a result matches any relevant label (record ID or slug).
+ */
+function isRelevant(result, relevantSet) {
+  const keys = resultKeys(result || {});
   for (const rel of relevantSet) {
-    if (norm === rel) return 1;
+    const slug = rel.includes(":") ? rel.slice(rel.indexOf(":") + 1) : rel;
+    if (keys.has(rel) || keys.has(slug)) return 1;
   }
   return 0;
 }
@@ -85,7 +99,7 @@ function isRelevant(resultId, relevantSet) {
 function dcg(results, relevantSet, k) {
   let score = 0;
   for (let i = 0; i < Math.min(results.length, k); i++) {
-    const rel = isRelevant(results[i].id, relevantSet);
+    const rel = isRelevant(results[i], relevantSet);
     if (rel) {
       score += rel / Math.log2(i + 2);
     }
@@ -111,7 +125,7 @@ function idcg(relevantSet, k) {
  */
 function mrr(results, relevantSet) {
   for (let i = 0; i < results.length; i++) {
-    if (isRelevant(results[i].id, relevantSet)) {
+    if (isRelevant(results[i], relevantSet)) {
       return 1 / (i + 1);
     }
   }

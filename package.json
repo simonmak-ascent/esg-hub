@@ -10,7 +10,9 @@
     "lint": "eslint",
     "test": "playwright test",
     "test:ci": "playwright test --reporter=list",
-    "verify:db": "node scripts/verify-db-schema.mjs"
+    "verify:db": "node scripts/verify-db-schema.mjs",
+    "eval-search": "node scripts/eval-search.mjs",
+    "eval-pipeline": "node scripts/eval-pipeline.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.8.1",
