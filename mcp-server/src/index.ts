@@ -5,7 +5,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 
 const BASE_URL = process.env.ESG_HUB_API_URL || "https://esg-hub.ascent.partners";
-const API_BASE = process.env.ESG_HUB_API_BASE || "http://localhost:3000";
+const API_BASE = process.env.ESG_HUB_API_BASE || BASE_URL;
 const WRITE_TOKEN = process.env.ESG_HUB_WRITE_TOKEN || "";
 
 /**
@@ -165,9 +165,9 @@ function mapWriteError(err: unknown, notFoundHint?: string) {
 
 const server = new McpServer({
   name: "esg-hub",
-  version: "1.2.0",
+  version: "1.3.0",
   description:
-    "Access the ESG Hub knowledge base — 307 articles and 244 curated external resources covering Environmental, Social, and Governance topics.",
+    "Access the ESG Hub knowledge base — ESG articles, curated external resources, glossary terms, reporting frameworks, and the industry taxonomy.",
 });
 
 // ── Tool: search_esg ────────────────────────────────────────────────────
@@ -523,42 +523,44 @@ server.tool(
   async ({ query, limit }) => {
     try {
       const result = await apiGet<{
-        data: Array<{
+        results: Array<{
           id: string;
+          table: string;
           title: string;
-          permalink: string;
-          description: string;
-          section: string;
-          pillar: string;
-          source_type: string;
-          hybrid_score?: number;
+          permalink?: string;
+          description?: string;
+          section?: string;
+          relevance?: number;
+          source_type?: string;
         }>;
-        total: number;
+        pagination?: { total: number };
       }>("/search", { mode: "hybrid", q: query, limit: String(limit) });
 
-      const formatted = result.data
+      const items = result.results ?? [];
+      const formatted = items
         .map((item, i) => {
-          const link = `${BASE_URL}${item.permalink}`;
-          return `${i + 1}. **${item.title}** [${item.source_type === "page" ? "Article" : "Resource"}] (score: ${item.hybrid_score?.toFixed(3) || "N/A"})\n   ${item.description || ""}\n   Link: ${link}`;
+          const link = item.permalink ? `${BASE_URL}${item.permalink}` : "";
+          const kind = item.source_type === "external" ? "Resource" : "Article";
+          return `${i + 1}. **${item.title}** [${kind}] (score: ${item.relevance ?? "N/A"})\n   ${item.description || ""}\n   Link: ${link}`;
         })
         .join("\n\n");
 
-      const empty = result.data.length === 0;
+      const empty = items.length === 0;
       return {
         content: [
           {
             type: "text" as const,
             text: empty
               ? `No hybrid results for "${query}". Try broader terms or use search_esg for BM25-only search.`
-              : `Found ${result.total} results for "${query}":\n\n${formatted}`,
+              : `Found ${result.pagination?.total ?? items.length} results for "${query}":\n\n${formatted}`,
           },
         ],
         structuredContent: {
           query,
           mode: "hybrid",
-          total: result.total,
-          count: result.data.length,
-          items: result.data,
+          total: result.pagination?.total ?? items.length,
+          count: items.length,
+          items,
         },
       };
     } catch (err) {
@@ -571,7 +573,7 @@ server.tool(
 
 server.tool(
   "get_term",
-  "Fetch a glossary term by ID, slug, or permalink. Returns the full term definition plus related frameworks that reference this term. Use when users ask about specific ESG terminology.",
+  "Fetch a glossary term by ID, slug, or permalink. Returns the full term definition and facets. Use when users ask about specific ESG terminology.",
   {
     term_id: z
       .string()
@@ -581,52 +583,33 @@ server.tool(
   { readOnlyHint: true, openWorldHint: false, idempotentHint: true },
   async ({ term_id }) => {
     try {
-      const [termResult, relatedResult] = await Promise.all([
-        apiGet<{
-          data: {
-            id: string;
-            term: string;
-            definition: string;
-            slug?: string;
-            section?: string;
-            facets?: unknown;
-          };
-        }>("/terms", { id: encodeURIComponent(term_id) }),
-        apiGet<{
-          data: Array<{
-            id: string;
-            title: string;
-            permalink: string;
-            section?: string;
-          }>;
-        }>(`/pages/${encodeURIComponent(term_id)}/related`).catch(() => ({
-          data: [] as Array<{ id: string; title: string; permalink: string; section?: string }>,
-        })),
-      ]);
+      const termResult = await apiGet<{
+        data: {
+          id: string;
+          name: string;
+          definition: string;
+          section?: string;
+          pillar?: string;
+          permalink?: string;
+          facets?: unknown;
+        };
+      }>(`/terms/${encodeURIComponent(term_id)}`);
 
       const term = termResult.data;
-      const related = relatedResult.data;
 
       const text = [
-        `# ${term.term}`,
+        `# ${term.name}`,
         term.section ? `**Section:** ${term.section}` : "",
         `\n## Definition`,
         term.definition,
         term.facets ? `\n## Facets\n\`\`\`json\n${JSON.stringify(term.facets, null, 2)}\n\`\`\`` : "",
-        related.length > 0
-          ? `\n## Related Frameworks\n${related.map((r) => `- **${r.title}** (${r.section || "N/A"}) → ${BASE_URL}${r.permalink}`).join("\n")}`
-          : "",
       ]
         .filter(Boolean)
         .join("\n");
 
       return {
         content: [{ type: "text" as const, text }],
-        structuredContent: {
-          term,
-          related_frameworks: related,
-          related_count: related.length,
-        },
+        structuredContent: { term },
       };
     } catch (err) {
       return mapApiError(
@@ -652,7 +635,7 @@ server.tool(
       .optional()
       .describe("Optional filter: only return edges of this type (e.g., 'framework', 'term', 'related_pages')"),
   },
-  { readOnlyHint: true, openWorldHint: true },
+  { readOnlyHint: true, openWorldHint: false },
   async ({ record_id, edge_type }) => {
     try {
       const result = await apiGet<{
@@ -674,7 +657,7 @@ server.tool(
 
       const groups: Record<string, typeof edges> = {};
       for (const edge of edges) {
-        const type = edge.edge_type || "unknown";
+        const type = edge.edge_type || "related_pages";
         (groups[type] ??= []).push(edge);
       }
 
@@ -720,26 +703,29 @@ server.tool(
   async ({ limit, offset }) => {
     try {
       const result = await apiGet<{
-        data: Array<{
+        items: Array<{
           id: string;
-          title: string;
-          permalink: string;
+          name: string;
+          abbreviation?: string;
           description?: string;
+          website?: string;
           section?: string;
-          content?: string;
         }>;
         pagination: { total: number; limit: number; offset: number; has_more: boolean };
       }>("/frameworks", { limit: String(limit), offset: String(offset) });
 
-      const formatted = result.data
+      const frameworks = result.items ?? [];
+      const formatted = frameworks
         .map((fw, i) => {
           const idx = result.pagination.offset + i + 1;
-          return `${idx}. **${fw.title}**\n   ${fw.description?.slice(0, 160) || fw.content?.slice(0, 160) || "N/A"}\n   Link: ${BASE_URL}${fw.permalink}`;
+          const abbr = fw.abbreviation ? ` (${fw.abbreviation})` : "";
+          const link = fw.website ? `\n   Link: ${fw.website}` : "";
+          return `${idx}. **${fw.name}**${abbr}\n   ${fw.description?.slice(0, 160) || "N/A"}${link}`;
         })
         .join("\n\n");
 
       const pag = result.pagination;
-      const nextOffset = pag.offset + result.data.length;
+      const nextOffset = pag.offset + frameworks.length;
       const summary = `Showing ${pag.offset + 1}–${nextOffset} of ${pag.total} frameworks${pag.has_more ? ` (more available — call again with offset=${nextOffset})` : ""}`;
 
       return {
@@ -750,9 +736,9 @@ server.tool(
           },
         ],
         structuredContent: {
-          items: result.data,
+          items: frameworks,
           pagination: {
-            count: result.data.length,
+            count: frameworks.length,
             total: pag.total,
             offset: pag.offset,
             has_more: pag.has_more,
@@ -770,38 +756,38 @@ server.tool(
 
 server.tool(
   "list_industries",
-  "List all industry sectors tagged across the ESG Hub knowledge base. Returns a hardcoded industry taxonomy with names, sectors, and descriptions. Use to discover valid industry filter values for list_esg_pages or tag_content.",
+  "List the ESG Hub industry taxonomy (IFRS/SASB-style), grouped by sector. Use to discover valid industry values for tagging and filtering.",
   {},
   { readOnlyHint: true, openWorldHint: false, idempotentHint: true },
   async () => {
-    const industries = [
-      { name: "Financial Services & Insurance", sector: "Finance", description: "Banking, investment management, insurance, and capital markets" },
-      { name: "Energy", sector: "Energy & Utilities", description: "Oil & gas, renewables, electric utilities, and power generation" },
-      { name: "Manufacturing & Industrials", sector: "Industrials", description: "Heavy machinery, industrial equipment, chemicals, and aerospace" },
-      { name: "Technology & Software", sector: "Technology", description: "Software, IT services, hardware, semiconductors, and data centers" },
-      { name: "Healthcare & Pharmaceuticals", sector: "Healthcare", description: "Pharmaceuticals, biotech, medical devices, and healthcare providers" },
-      { name: "Consumer Goods & Retail", sector: "Consumer Discretionary", description: "Retail, apparel, food & beverage, and consumer products" },
-      { name: "Real Estate & Construction", sector: "Real Estate", description: "Commercial and residential real estate, REITs, and construction" },
-      { name: "Transportation & Logistics", sector: "Industrials", description: "Airlines, shipping, rail, trucking, and logistics providers" },
-      { name: "Agriculture & Food", sector: "Consumer Staples", description: "Agribusiness, farming, food processing, and fisheries" },
-      { name: "Mining & Metals", sector: "Materials", description: "Mining, metals extraction, and mineral processing" },
-      { name: "Telecommunications", sector: "Communication Services", description: "Telecom operators, ISPs, and satellite communications" },
-      { name: "Media & Entertainment", sector: "Communication Services", description: "Publishing, broadcasting, streaming, and gaming" },
-    ];
+    try {
+      const result = await apiGet<{
+        items: Array<{
+          id: string;
+          industry_id: string;
+          name_en: string;
+          name_zh?: string;
+          name_zh_tw?: string;
+          sector_id: string;
+        }>;
+        pagination: { total: number };
+      }>("/industries", { limit: "200" });
 
-    const text = [
-      "# ESG Hub Industry Taxonomy",
-      `\n${industries.length} industries across ${[...new Set(industries.map((i) => i.sector))].length} sectors:\n`,
-      ...industries.map((ind) => `- **${ind.name}** (${ind.sector})\n  ${ind.description}`),
-    ].join("\n");
+      const industries = result.items ?? [];
+      const sectors = [...new Set(industries.map((i) => i.sector_id))];
+      const text = [
+        "# ESG Hub Industry Taxonomy",
+        `\n${industries.length} industries across ${sectors.length} sectors:\n`,
+        ...industries.map((ind) => `- **${ind.name_en}** (${ind.sector_id})`),
+      ].join("\n");
 
-    return {
-      content: [{ type: "text" as const, text }],
-      structuredContent: {
-        count: industries.length,
-        industries,
-      },
-    };
+      return {
+        content: [{ type: "text" as const, text }],
+        structuredContent: { count: industries.length, industries },
+      };
+    } catch (err) {
+      return mapApiError(err, "The industries endpoint should always be available — retry in a few seconds.");
+    }
   }
 );
 
@@ -832,24 +818,20 @@ server.tool(
       if (facets) body.facets = facets;
 
       const result = await apiPost<{
-        data: {
-          id: string;
-          proposal_id: string;
-          status: string;
-        };
+        proposal_id: string;
+        status: string;
       }>("/terms", body);
 
       return {
         content: [
           {
             type: "text" as const,
-            text: `Term proposal submitted: **${name}**\n\nProposal ID: ${result.data.proposal_id}\nStatus: ${result.data.status}\n\nYour proposal will be reviewed before publication.`,
+            text: `Term proposal submitted: **${name}**\n\nProposal ID: ${result.proposal_id}\nStatus: ${result.status}\n\nYour proposal will be reviewed before publication.`,
           },
         ],
         structuredContent: {
-          proposal_id: result.data.proposal_id,
-          status: result.data.status,
-          term_id: result.data.id,
+          proposal_id: result.proposal_id,
+          status: result.status,
         },
       };
     } catch (err) {
@@ -870,7 +852,7 @@ server.tool(
       .describe("Page identifier — permalink path, slug, or SurrealDB record ID (e.g., 'page:abc123')"),
     facets: z
       .object({
-        topic: z.string().optional().describe("Primary topic classification"),
+        topic: z.array(z.string()).optional().describe("Topic classifications"),
         industry: z.array(z.string()).optional().describe("Relevant industry sectors"),
         framework: z.array(z.string()).optional().describe("Related ESG frameworks/standards"),
         jurisdiction: z.array(z.string()).optional().describe("Applicable jurisdictions"),
@@ -882,6 +864,15 @@ server.tool(
   { readOnlyHint: false, destructiveHint: false },
   async ({ page_id, facets }) => {
     try {
+      // Resolve a permalink/slug to the SurrealDB record ID the facets route requires.
+      let recordId = page_id;
+      if (!recordId.startsWith("page:")) {
+        const page = await apiGet<{ data: { id: string } }>(
+          `/pages/${encodeURIComponent(page_id)}`
+        );
+        recordId = page.data.id;
+      }
+
       const result = await apiPatch<{
         data: {
           id: string;
@@ -889,7 +880,7 @@ server.tool(
           facets: unknown;
           updated_at?: string;
         };
-      }>(`/pages/${encodeURIComponent(page_id)}/facets`, { facets });
+      }>(`/pages/${encodeURIComponent(recordId)}/facets`, { facets });
 
       const page = result.data;
       return {

@@ -143,9 +143,11 @@ Content-work drivers (all dry-run-first; use them rather than ad-hoc SQL):
 
 ---
 
-## Completion Contract (MANDATORY — no dangling work)
+## Completion Contract (MANDATORY — an agent is FORBIDDEN from stopping with work unfinished)
 
-Every task an LLM agent starts MUST be driven to a **fully shipped** state before the agent stops. A task is complete only when ALL of the following are true:
+**Prime directive.** An LLM agent MUST NOT end its turn, session, or task while ANY started work is not fully shipped. Stopping with unfinished work is a **contract violation**, not a status update. There is no "I'll continue later", no "PR opened, awaiting review", and no "code written" as an acceptable terminal state.
+
+### Definition of done — all eight, in order
 
 1. **Implemented** — code/config/docs written and self-reviewable.
 2. **Verified on a compute box** — lint, typecheck, unit tests, and (where applicable) eval gates pass via `cs run` on `workbench` / `wcag-workforce` / `wcag-workforce-2`.
@@ -157,12 +159,34 @@ Every task an LLM agent starts MUST be driven to a **fully shipped** state befor
 8. **E2E on production** — run the production E2E and smoke the affected endpoints/URLs
    (e.g. `gh workflow run test.yml -f base_url=https://esg-hub.ascent.partners`, plus targeted `curl`/Playwright checks); attach the results.
 
-Rules:
+### Prohibited stopping points (NEVER end a turn here)
 
-- **Never stop at "code written" or "PR opened".** Continue through merge, deploy, and production E2E.
-- **No partial phases.** Either complete a phase end-to-end (with its gate evidence) or do not start it.
-- **Blockers are the last resort.** Exhaust the self-sufficiency ladder (purpose-built API/MCP → `gh`/`vercel`/`cs` → Playwright → research → obtain the missing tool) before reporting a blocker. If genuinely blocked on a user-only secret or decision, push everything that IS completable, open/comment a tracking issue, and state the exact unblocking action — never silently leave work half-done.
-- **Evidence, not assertions.** Every completion claim is backed by a command run in the same session; no summary claim without fresh output.
+- Code written but uncommitted, or committed but unpushed.
+- A branch or PR left open for a human to merge.
+- A phase implemented but not verified on a compute box.
+- Work green in CI but not deployed and verified on production.
+- A TODO list ending with in-progress items, unless every open item is a documented blocker (below) and everything completable is shipped.
+- **"Partially done."** If a unit of work cannot be finished, it MUST NOT be started: decompose it and start only units that can be driven through all eight criteria.
+
+### Mandatory pre-stop checklist (self-audit before ending ANY turn)
+
+- [ ] `git status` is clean (nothing uncommitted/unpushed) **or** the branch is merged and deleted.
+- [ ] All required checks pass for the latest commit.
+- [ ] The merge commit is deployed and healthy in production.
+- [ ] Production E2E/smoke has run and passed since the deploy.
+- [ ] Any remaining item is a documented blocker with a tracking issue, and all completable work is shipped.
+
+If any box is unchecked and the item is **not** a documented blocker, the agent **MUST continue working** — it may not end the turn.
+
+### Blockers — the ONLY permitted stop
+
+A blocker must be a user-only secret or an external decision that cannot be obtained through the self-sufficiency ladder. To claim one, the agent MUST: (1) attempt every rung of the ladder (purpose-built API/MCP → `gh`/`vercel`/`cs` → Playwright → research → obtain the tool); (2) push all completable work; (3) open/comment a tracking issue naming the exact unblocking action; and (4) state the blocker with the commands tried. **"Large scope", "many files", or "time/context budget" are NOT blockers.**
+
+### Enforcement
+
+- CI and reviewers reject any delivery missing one of the eight done criteria.
+- An agent that stops with unfinished, non-blocked work has **failed the task**, regardless of how much it completed.
+- **Evidence, not assertions:** every completion claim is backed by a command run in the same session.
 
 ---
 
