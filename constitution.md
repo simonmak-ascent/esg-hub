@@ -51,9 +51,13 @@ Last updated: 2026-07-19
 - No reading `.env`, `.env.local`, or `.env.production` files
 - No hardcoding `SURREAL_NAMESPACE` from env var in app code (already hardcoded to `"esg_hub"`)
 
-## Completion & Delivery Contract (MANDATORY)
+## Completion & Delivery Contract (MANDATORY — no agent may stop with work unfinished)
 
-No task may be left unfinished. A task is complete only when it is implemented, verified on a compute box (`cs run`), committed and pushed, opened as a PR with evidence, **CI-green**, **merged to `main`**, **deployed to production**, and **E2E-verified against production**. The completing agent merges its own PR once required checks pass (squash-merge). Stopping at "code written" or "PR opened" is a failure. If blocked by a user-only secret or decision, exhaust the self-sufficiency ladder first, push everything completable, and record the exact unblocking action — never leave work dangling.
+An agent is FORBIDDEN from ending a turn/session while any started work is unfinished. A task is done only when it is **all eight**: implemented → CS-verified (`cs run`) → committed → pushed → PR with evidence → CI green → **merged to `main`** → **deployed to production** → **production E2E/smoke passed**. The completing agent merges its own PR (squash) and then verifies the production deploy and E2E.
+
+Prohibited stopping points: uncommitted/unpushed code; an open PR awaiting a human; implemented-but-unverified; CI-green-but-not-deployed; a TODO with in-progress items. Work that cannot be finished must not be started — decompose and start only completable units.
+
+The ONLY permitted stop is a genuine hard blocker (user-only secret/decision) after exhausting the self-sufficiency ladder and shipping all completable work, with a tracking issue and the exact unblocking action recorded. "Large scope" or "context budget" are not blockers. An agent that stops with unfinished, non-blocked work has failed the task.
 
 ## File Structure Rules
 
