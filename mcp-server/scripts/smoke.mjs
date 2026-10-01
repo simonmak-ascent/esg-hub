@@ -30,15 +30,26 @@ await client.connect(transport);
 
 const listed = await client.listTools();
 console.log(`tools listed: ${listed.tools.length}`);
-if (listed.tools.length !== 12) fail(`expected 12 tools, got ${listed.tools.length}`);
+if (listed.tools.length !== 13) fail(`expected 13 tools, got ${listed.tools.length}`);
+for (const t of listed.tools) {
+  if (!t.title) fail(`tool ${t.name} has no title`);
+  if (!t.outputSchema) fail(`tool ${t.name} has no outputSchema`);
+}
 
 async function call(name, args) {
   const r = await client.callTool({ name, arguments: args });
-  const err = r.isError ? "isError" : "ok";
-  console.log(`- ${name}: ${err}`);
-  if (r.isError) fail(`${name} returned isError`);
+  if (r.isError) {
+    const detail = r.content?.[0]?.text || JSON.stringify(r.structuredContent);
+    console.log(`- ${name}: isError -> ${detail}`);
+    fail(`${name} returned isError`);
+  } else {
+    console.log(`- ${name}: ok`);
+  }
   return r.structuredContent;
 }
+
+const info = await call("get_server_info", {});
+if (!info?.version) fail("get_server_info lacked version");
 
 const meta = await call("get_esg_metadata", {});
 if (!meta?.stats?.total_pages) fail("get_esg_metadata lacked stats");
