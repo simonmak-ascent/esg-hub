@@ -4,7 +4,8 @@ const BASE_URL = process.env.ESG_HUB_API_URL || "https://esg-hub.ascent.partners
 const API_BASE = process.env.ESG_HUB_API_BASE || BASE_URL;
 const WRITE_TOKEN = process.env.ESG_HUB_WRITE_TOKEN || "";
 const SERVER_NAME = "esg-hub";
-const SERVER_VERSION = "1.3.2";
+const SERVER_VERSION = "1.4.0";
+const TOOL_COUNT = 15;
 /**
  * Helper to call the ESG Hub REST API
  */
@@ -167,42 +168,44 @@ export function createMcpServer() {
     // ── Tool: get_server_info ───────────────────────────────────────────────
     server.registerTool("get_server_info", {
         title: "Get Server Info",
-        description: "Use this first to confirm the server version, API endpoint, and knowledge-base size before choosing other tools. Returns server name, version, API base, and aggregate stats (pages, resources, sections, pillars, domains). Read-only; it reads no content.",
+        description: "Use this first to confirm the ESG Hub MCP server is reachable and see its version and API base. It performs one liveness round-trip and returns only server metadata — name, version, API base, tool_count, and healthy — and never fails on an unreachable API: it returns healthy=false rather than an error. For sections, pillars, source domains, or totals use get_esg_metadata.",
         inputSchema: {},
         outputSchema: {
             name: z.string(),
             version: z.string(),
             api_base: z.string(),
-            stats: z.record(z.string(), z.number()),
+            tool_count: z.number(),
+            healthy: z.boolean(),
         },
         annotations: { readOnlyHint: true, openWorldHint: false, idempotentHint: true },
     }, async () => {
+        let healthy = true;
         try {
-            const meta = await apiGet("/meta");
-            const s = meta.stats;
-            return {
-                content: [
-                    {
-                        type: "text",
-                        text: `# ESG Hub MCP Server\n\n- Version: ${SERVER_VERSION}\n- API: ${API_BASE}\n- Pages: ${s.total_pages}\n- External resources: ${s.total_resources}\n- Sections: ${s.total_sections}\n- Pillars: ${s.total_pillars}\n- Source domains: ${s.total_domains}`,
-                    },
-                ],
-                structuredContent: {
-                    name: SERVER_NAME,
-                    version: SERVER_VERSION,
-                    api_base: API_BASE,
-                    stats: s,
+            await apiGet("/meta");
+        }
+        catch {
+            healthy = false;
+        }
+        return {
+            content: [
+                {
+                    type: "text",
+                    text: `# ESG Hub MCP Server\n\n- Version: ${SERVER_VERSION}\n- API: ${API_BASE}\n- Tools: ${TOOL_COUNT}\n- Healthy: ${healthy}\n\nUse get_esg_metadata for knowledge-base counts and filter vocabulary.`,
                 },
-            };
-        }
-        catch (err) {
-            return mapApiError(err, "The metadata endpoint should always be available — retry in a few seconds.");
-        }
+            ],
+            structuredContent: {
+                name: SERVER_NAME,
+                version: SERVER_VERSION,
+                api_base: API_BASE,
+                tool_count: TOOL_COUNT,
+                healthy,
+            },
+        };
     });
     // ── Tool: search_esg ────────────────────────────────────────────────────
     server.registerTool("search_esg", {
         title: "Search ESG (keyword)",
-        description: "Full-text keyword (BM25) search across all ESG Hub articles and external resources. Use for exact term or keyword lookups; for nuanced/conceptual queries that benefit from semantic similarity, use search_content instead. Returns ranked results with title, link, snippet, and source type.",
+        description: "Exact keyword (BM25) search across ESG Hub articles and curated external resources. Use when the user supplies a specific term, identifier, or phrase (e.g., 'GRI 305', 'Scope 3'); for paraphrased or conceptual questions prefer search_content, which adds semantic similarity. Terms are matched individually, not as one exact phrase, and `source` narrows to 'pages' (ESG Hub articles) or 'external' (curated third-party URLs). Returns one ranked page of up to `limit` (max 50) items — there is no pagination, so raise `limit` to widen; zero matches returns an empty item list, not an error. Reads are cached ~2 minutes and rate-limited per IP; a 5xx means the API is redeploying — retry shortly.",
         inputSchema: {
             query: z.string().min(1).describe("Search query (e.g., 'carbon emissions', 'GRI standards')"),
             limit: z.number().min(1).max(50).default(10).describe("Maximum number of results"),
@@ -250,7 +253,7 @@ export function createMcpServer() {
     // ── Tool: search_content ────────────────────────────────────────────────
     server.registerTool("search_content", {
         title: "Search ESG (hybrid)",
-        description: "Hybrid semantic + keyword search across all ESG Hub content (vector similarity + BM25 with ESG re-ranking). Use for nuanced or conceptual queries; for exact keyword/phrase lookups use search_esg. Results are ranked by a fused relevance score.",
+        description: "Hybrid search that fuses 384-dim semantic similarity with BM25 and ESG re-ranking across ESG Hub articles and external resources. Use for conceptual or paraphrased questions — natural-language phrases work better than single tokens because `query` is embedded; when the user gives an exact identifier or phrase prefer the cheaper search_esg. `query` must be non-empty and `limit` defaults to 10 and is capped at 50. Returns one ranked page of up to `limit` items, each carrying a fused relevance score (higher is better); there is no pagination, so raise `limit` to widen, and unlike search_esg there is no `source` filter. Zero matches returns an empty item list, not an error. Cached ~2 minutes; rate-limited per IP; retry on 5xx.",
         inputSchema: {
             query: z.string().min(1).describe("Search query (e.g., 'carbon emissions', 'board diversity')"),
             limit: z.number().min(1).max(50).default(10).describe("Maximum number of results"),
@@ -300,7 +303,7 @@ export function createMcpServer() {
     // ── Tool: get_esg_page ──────────────────────────────────────────────────
     server.registerTool("get_esg_page", {
         title: "Get ESG Article",
-        description: "Retrieve the full content of one ESG Hub article by permalink, slug, or record ID. Use after search_esg, search_content, or list_esg_pages to read a specific article. Returns section, pillar, keywords, and canonical URL. Read-only and idempotent.",
+        description: "Read one ESG Hub article in full, addressed by permalink (e.g., 'standards/gri-101'), bare slug, or record ID ('page:abc123'). Use it once search_esg, search_content, or list_esg_pages has returned an identifier; to fetch a page's neighbours rather than its content use get_related. Returns the complete article body plus section, pillar, keywords, and canonical URL. It resolves only `page` records — a resource URL returns NOT_FOUND — and a redirect-only record resolves to its target; an unknown identifier returns NOT_FOUND. Cached ~10 minutes; rate-limited per IP; retry on 5xx.",
         inputSchema: {
             page_id: z
                 .string()
@@ -335,7 +338,7 @@ export function createMcpServer() {
     // ── Tool: list_esg_pages ────────────────────────────────────────────────
     server.registerTool("list_esg_pages", {
         title: "List ESG Articles",
-        description: "List and filter ESG Hub articles by section, pillar, or title substring. Use to browse the knowledge base or enumerate a domain. Returns paginated results; pass the response's next_offset as offset to get the next page. Call get_esg_metadata first to discover valid section/pillar values.",
+        description: "Enumerate ESG Hub articles, optionally filtered by `section`, `pillar`, or a title substring (`query` — an exact substring, not fuzzy). Use it to browse a whole section; to find articles by meaning use search_content. Results are ordered by section then title and returned one page at a time: pass the response's `next_offset` back as `offset` until `has_more` is false. `section` and `pillar` values must be taken from get_esg_metadata, and `offset` is a raw row count so advance it by `limit`; `limit` caps at 100 (default 20). A filter that matches nothing, or an `offset` past the end, returns an empty item list with `has_more=false`. Cached ~5 minutes; rate-limited per IP; retry on 5xx.",
         inputSchema: {
             section: z.string().optional().describe("Filter by section (e.g., 'environmental', 'standards')"),
             pillar: z.string().optional().describe("Filter by pillar (e.g., 'Environmental', 'Standards')"),
@@ -385,7 +388,7 @@ export function createMcpServer() {
     // ── Tool: list_esg_resources ────────────────────────────────────────────
     server.registerTool("list_esg_resources", {
         title: "List External Resources",
-        description: "List curated external ESG resources (standards bodies, regulations, tools, databases) with source URLs. Use to find authoritative references by domain or title. Returns paginated results; pass next_offset as offset to page. Call get_esg_metadata first for valid domain values.",
+        description: "Enumerate curated external ESG resources (standards bodies, regulators, tools, databases) with their source URLs, optionally filtered by exact source `domain` or a title substring (`query` — an exact substring, not fuzzy). Use it to assemble authoritative references; for ESG Hub's own articles use list_esg_pages. Results are ordered by title and paged: pass `next_offset` back as `offset`, advancing it by `limit` (a raw row count). `domain` must be a host from get_esg_metadata's domain list; `limit` caps at 100 (default 20). A filter that matches nothing, or an `offset` past the end, returns an empty item list with `has_more=false`. Cached ~5 minutes; rate-limited per IP; retry on 5xx.",
         inputSchema: {
             domain: z.string().optional().describe("Filter by source domain (e.g., 'ghgprotocol.org')"),
             query: z.string().optional().describe("Filter by title substring"),
@@ -432,7 +435,7 @@ export function createMcpServer() {
     // ── Tool: get_esg_metadata ──────────────────────────────────────────────
     server.registerTool("get_esg_metadata", {
         title: "Get Knowledge Base Stats",
-        description: "Get ESG Hub knowledge-base statistics and the full lists of sections, pillars, and source domains with counts. Use before filtering with list_esg_pages or list_esg_resources to discover valid filter values. Read-only and idempotent.",
+        description: "Discover the filter vocabulary for the knowledge base: total counts plus the exact `section`, `pillar`, and source-`domain` values with their counts. Call it before list_esg_pages or list_esg_resources so filters match real values; for server version and health use get_server_info. It takes no parameters, returns a single object (never paginated), and the lists are seeded reference values that change only on deploy, so they can be cached within a session. Cached ~10 minutes; rate-limited per IP; retry on 5xx.",
         inputSchema: {},
         outputSchema: {
             stats: z.record(z.string(), z.number()),
@@ -485,7 +488,7 @@ ${domainsStr}`,
     // ── Tool: get_term ──────────────────────────────────────────────────────
     server.registerTool("get_term", {
         title: "Get Glossary Term",
-        description: "Fetch a glossary term by record ID, permalink, or name. Use when the user asks about specific ESG terminology; to search for terms by topic use search_esg or search_content. Returns the full definition and facets. Read-only and idempotent.",
+        description: "Look up one glossary term by record ID ('term:abc123'), permalink, or exact name and return its full definition and facets. Use it when the user asks 'what is <term>'; to find terms by topic, or across all content, use search_esg or search_content, and to survey the glossary use list_terms. Name matching is exact (case-insensitive) with no fuzzy or partial matching, and it returns a single term, never a list. The `definition` field is the authoritative text and `facets` carries the topic/content_type classification; an unknown identifier returns NOT_FOUND. Cached ~10 minutes; rate-limited per IP; retry on 5xx.",
         inputSchema: {
             term_id: z
                 .string()
@@ -519,7 +522,7 @@ ${domainsStr}`,
     // ── Tool: get_related ────────────────────────────────────────────────────
     server.registerTool("get_related", {
         title: "Get Related Content",
-        description: "Traverse the ESG Hub knowledge graph from a page (record ID or permalink) and return connected records grouped by edge type. Use to explore how concepts interconnect; to read a page's content use get_esg_page. Read-only.",
+        description: "Traverse the ESG Hub knowledge graph one hop from a page and return every connected record grouped by edge type. Use it after get_esg_page when you need neighbouring concepts; to read a page's own content use get_esg_page. Returns at most 15 related pages and, today, only `related_pages` edges; a page with no links returns an empty group list, not an error. There is no pagination. `record_id` accepts a `page:` record ID or a permalink; `edge_type` filters the result to one edge type (default: all). Cached ~10 minutes; rate-limited per IP; retry on 5xx.",
         inputSchema: {
             record_id: z.string().min(1).describe("Page record ID (e.g., 'page:abc123') or permalink/slug"),
             edge_type: z.string().optional().describe("Optional filter: only return edges of this type"),
@@ -573,7 +576,7 @@ ${domainsStr}`,
     // ── Tool: list_frameworks ────────────────────────────────────────────────
     server.registerTool("list_frameworks", {
         title: "List Reporting Frameworks",
-        description: "List ESG reporting frameworks and standards (GRI, SASB, TCFD, ESRS, CDP, etc.). Use to discover which frameworks the knowledge base covers; for related article content use list_esg_pages with section='standards'. Paginated.",
+        description: "Enumerate the ESG reporting frameworks and standards the knowledge base covers (GRI, SASB/ISSB, TCFD, ESRS, CDP, TNFD, …), with each framework's abbreviation, description, and official website. Use it to discover coverage; for the ESG Hub articles that explain a standard use list_esg_pages with section='standards'. Results are ordered by name and paged: pass `next_offset` back as `offset`, a raw row count so advance it by `limit`; `limit` defaults to 20 and is capped at 100. An `offset` past the end returns an empty `items` list with `has_more=false`. Cached ~10 minutes; rate-limited per IP; retry on 5xx.",
         inputSchema: {
             limit: z.number().min(1).max(100).default(20).describe("Results per page"),
             offset: z.number().min(0).default(0).describe("Pagination offset — pass the previous next_offset"),
@@ -616,7 +619,7 @@ ${domainsStr}`,
     // ── Tool: list_industries ───────────────────────────────────────────────
     server.registerTool("list_industries", {
         title: "List Industries",
-        description: "List the ESG Hub industry taxonomy (IFRS/SASB-style), grouped by sector. Use to discover valid industry values for tagging and filtering. Read-only and idempotent.",
+        description: "Return the ESG Hub industry taxonomy (IFRS/SASB-style): every industry with its stable `industry_id`, English/Chinese names, and the `sector_id` it belongs to. Use it to obtain valid industry values for tag_content or to group coverage by sector; for article sections and source domains use get_esg_metadata. It takes no parameters and returns the complete taxonomy in one response (no pagination). The taxonomy is seeded reference data, not derived from articles, so it is stable across sessions and cached ~10 minutes; rate-limited per IP; retry on 5xx.",
         inputSchema: {},
         outputSchema: {
             count: z.number(),
@@ -642,10 +645,63 @@ ${domainsStr}`,
             return mapApiError(err, "The industries endpoint should always be available — retry in a few seconds.");
         }
     });
+    // ── Tool: list_terms ────────────────────────────────────────────────────
+    server.registerTool("list_terms", {
+        title: "List Glossary Terms",
+        description: "Enumerate glossary terms, optionally filtered by an exact name substring (`query` — case-insensitive, not fuzzy). Use it to survey the glossary or page through terminology; to fetch one term's definition use get_term, and to search all content use search_esg or search_content. Results are ordered by name and paged: pass `next_offset` back as `offset` (a raw row count, so advance it by `limit`); `limit` defaults to 20 and is capped at 100. A query that matches nothing, or an `offset` past the end, returns an empty item list with `has_more=false`. Cached ~10 minutes; rate-limited per IP; retry on 5xx.",
+        inputSchema: {
+            query: z.string().max(200).optional().describe("Filter by name substring (case-insensitive)"),
+            limit: z.number().min(1).max(100).default(20).describe("Results per page"),
+            offset: z.number().min(0).default(0).describe("Pagination offset — pass the previous next_offset"),
+        },
+        outputSchema: { items: z.array(itemSchema), pagination: paginationSchema },
+        annotations: { readOnlyHint: true, openWorldHint: false },
+    }, async ({ query, limit, offset }) => {
+        try {
+            const params = { limit: String(limit), offset: String(offset) };
+            if (query)
+                params.q = query;
+            const result = await apiGet("/terms", params);
+            const terms = result.items ?? [];
+            const formatted = terms
+                .map((t, i) => {
+                const idx = result.pagination.offset + i + 1;
+                const def = (t.definition || "").slice(0, 140);
+                return `${idx}. **${t.name}**\n   ${def}${t.definition && t.definition.length > 140 ? "…" : ""}`;
+            })
+                .join("\n\n");
+            const pag = result.pagination;
+            const nextOffset = pag.offset + terms.length;
+            const summary = `Showing ${pag.offset + 1}–${nextOffset} of ${pag.total} terms${pag.has_more ? ` (more available — call again with offset=${nextOffset})` : ""}`;
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: terms.length === 0
+                            ? `No glossary terms match${query ? ` "${query}"` : ""}.`
+                            : `${summary}\n\n${formatted}`,
+                    },
+                ],
+                structuredContent: {
+                    items: terms,
+                    pagination: {
+                        count: terms.length,
+                        total: pag.total,
+                        offset: pag.offset,
+                        has_more: pag.has_more,
+                        next_offset: pag.has_more ? nextOffset : null,
+                    },
+                },
+            };
+        }
+        catch (err) {
+            return mapApiError(err, "The terms endpoint should always be available — retry in a few seconds.");
+        }
+    });
     // ── Tool: propose_term ──────────────────────────────────────────────────
     server.registerTool("propose_term", {
         title: "Propose Glossary Term",
-        description: "Submit a new glossary term proposal for human review before publication. Use only when the user wants to contribute a term; this is a write that requires a valid token in ESG_HUB_WRITE_TOKEN. Returns the proposal ID and status.",
+        description: "Submit a new glossary term for human review. Nothing is published immediately: the call creates a pending proposal and returns a `proposal_id`; a reviewer decides whether it goes live, and only an approved term later appears in get_term. Use it only when the user explicitly wants to contribute a term; to look one up use get_term. `name` is the display name and `definition` must be at least 10 characters; `facets` is optional and its values should come from get_esg_metadata / list_industries vocabularies. Requires a write token in ESG_HUB_WRITE_TOKEN — a missing or invalid token returns 401 — and calls are rate-limited.",
         inputSchema: {
             name: z.string().min(1).max(200).describe("The glossary term name (e.g., 'Materiality Assessment')"),
             definition: z.string().min(10).max(5000).describe("Full definition of the term (min 10 characters)"),
@@ -686,7 +742,7 @@ ${domainsStr}`,
     // ── Tool: tag_content ────────────────────────────────────────────────────
     server.registerTool("tag_content", {
         title: "Tag Content Facets",
-        description: "Update the facet tags on an existing ESG Hub page (permalink, slug, or record ID). Facets drive filtering, discoverability, and graph navigation. Use only to change tags; to read a page use get_esg_page. Write — requires ESG_HUB_WRITE_TOKEN.",
+        description: "Replace the facet tags on one existing ESG Hub page: `topic`, `industry`, `framework`, `jurisdiction`, `stakeholder`, and `content_type`. The supplied `facets` object replaces the page's facet set, so any facet key you omit is cleared; the page body and title are never changed or deleted. The response echoes the page's new `facets` and `updated_at`. The array facets (`topic`, `industry`, `framework`, `jurisdiction`, `stakeholder`) each accept multiple values, while `content_type` is a single string; values are validated against the vocabulary from get_esg_metadata / list_industries, and an unrecognised value or key is rejected with 400. Give `page_id` as a permalink, slug, or record ID — permalinks are resolved to the underlying record server-side. Use it to curate tags; to read a page use get_esg_page, and to queue a removal use flag_content. Requires ESG_HUB_WRITE_TOKEN; rate-limited.",
         inputSchema: {
             page_id: z.string().min(1).describe("Page permalink, slug, or record ID (e.g., 'page:abc123')"),
             facets: z
@@ -738,6 +794,43 @@ ${domainsStr}`,
         }
         catch (err) {
             return mapWriteError(err, "Verify the page_id exists and the facets object is valid.");
+        }
+    });
+    // ── Tool: flag_content ──────────────────────────────────────────────────
+    server.registerTool("flag_content", {
+        title: "Flag Content for Curation",
+        description: "Queue one ESG Hub page for human curation — delist, remove, or review — with a reason. Nothing changes immediately: the call records a pending request and returns a `proposal_id`; the page is not modified until a curator approves it. Use it when an article is outdated, duplicated, or inaccurate; to edit its facet tags instead use tag_content. `action` controls the requested outcome: `delist` hides the page from listings, `remove` deletes it, and `review` (the default) flags it for a curator to decide. Give `page_id` as a permalink, slug, or record ID (resolved server-side) and a `reason` of at least 10 characters. Requires ESG_HUB_WRITE_TOKEN; rate-limited.",
+        inputSchema: {
+            page_id: z.string().min(1).describe("Page permalink, slug, or record ID (e.g., 'page:abc123')"),
+            reason: z.string().min(10).max(1000).describe("Why the page should be curated (min 10 characters)"),
+            action: z
+                .enum(["delist", "remove", "review"])
+                .default("review")
+                .describe("Requested outcome: delist (hide from listings), remove (delete), or review (default)"),
+        },
+        outputSchema: { proposal_id: z.string(), status: z.string() },
+        annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+    }, async ({ page_id, reason, action }) => {
+        try {
+            // Resolve a permalink/slug to the SurrealDB record ID the API expects.
+            let recordId = page_id;
+            if (!recordId.startsWith("page:")) {
+                const page = await apiGet(`/pages/${encodeURIComponent(page_id)}`);
+                recordId = page.data.id;
+            }
+            const result = await apiPost(`/pages/${encodeURIComponent(recordId)}/flag`, { action, reason });
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: `Curation request queued for **${recordId}**\n\nAction: ${action}\nProposal ID: ${result.proposal_id}\nStatus: ${result.status}\n\nA curator will review it before any change is made.`,
+                    },
+                ],
+                structuredContent: { proposal_id: result.proposal_id, status: result.status },
+            };
+        }
+        catch (err) {
+            return mapWriteError(err, "Verify the page_id exists and the reason is at least 10 characters.");
         }
     });
     // ── Resources ───────────────────────────────────────────────────────────

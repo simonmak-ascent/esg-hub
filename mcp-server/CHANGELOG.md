@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.4.0
+
+- Rewrote every tool description to maximize TDQS: explicit when / when-not with
+  a named alternative, pagination (`next_offset`) and ordering behaviour, result
+  caps, empty-result and NOT_FOUND behaviour, write side effects + auth/rate-limit
+  notes, and parameter semantics beyond the schema.
+- Narrowed `get_server_info` to server-only metadata (`name`, `version`,
+  `api_base`, `tool_count`, `healthy`); knowledge-base stats now live only on
+  `get_esg_metadata` (removes the overlap).
+- Added `flag_content` (14th tool) with `POST /api/v1/pages/:id/flag` — queues a
+  page for human curation (delist / remove / review).
+- Added `list_terms` (15th tool) over the existing `GET /api/v1/terms` — survey
+  the glossary with name-substring filtering and pagination.
+
 ## 1.3.2
 
 - Release re-cut: npm had staged 1.3.1 (publish conflict) and the registry

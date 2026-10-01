@@ -30,7 +30,7 @@ await client.connect(transport);
 
 const listed = await client.listTools();
 console.log(`tools listed: ${listed.tools.length}`);
-if (listed.tools.length !== 13) fail(`expected 13 tools, got ${listed.tools.length}`);
+if (listed.tools.length !== 15) fail(`expected 15 tools, got ${listed.tools.length}`);
 for (const t of listed.tools) {
   if (!t.title) fail(`tool ${t.name} has no title`);
   if (!t.outputSchema) fail(`tool ${t.name} has no outputSchema`);
@@ -65,6 +65,9 @@ if (!fw?.items?.length) fail("list_frameworks returned no items");
 
 const ind = await call("list_industries", {});
 if (!ind?.industries?.length) fail("list_industries returned no industries");
+
+const term = await call("list_terms", { limit: 2 });
+if (!term?.items?.length) fail("list_terms returned no terms");
 
 const pg = await call("list_esg_pages", { limit: 1 });
 const pageId = pg?.items?.[0]?.id;

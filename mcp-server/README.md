@@ -5,7 +5,7 @@ agents access to the **ESG Hub** knowledge base — ESG articles, curated extern
 resources, glossary terms, reporting frameworks, the industry taxonomy, and the
 knowledge graph.
 
-- **13 tools**, read-only by default (two token-gated write tools on stdio)
+- **15 tools**, read-only by default (three token-gated write tools on stdio)
 - **stdio** (local) and **Streamable HTTP** (hosted) transports
 - Published as [`@simonmak-ascent/esg-hub-mcp`](https://www.npmjs.com/package/@simonmak-ascent/esg-hub-mcp)
 
@@ -48,7 +48,7 @@ node dist/index.js
 
 | Tool | Title | What it does | Annotations |
 |------|-------|--------------|-------------|
-| `get_server_info` | Get Server Info | Server version, API base, KB stats — **use this first** | read-only, idempotent |
+| `get_server_info` | Get Server Info | Server version, API base, health — **use this first** | read-only, idempotent |
 | `search_esg` | Search ESG (keyword) | BM25 keyword search across articles + resources | read-only |
 | `search_content` | Search ESG (hybrid) | Semantic + keyword fusion with ESG re-ranking | read-only |
 | `get_esg_page` | Get ESG Article | Full article by permalink/slug/record ID | read-only, idempotent |
@@ -56,11 +56,13 @@ node dist/index.js
 | `list_esg_resources` | List External Resources | Curated external resources by domain, paginated | read-only |
 | `get_esg_metadata` | Get Knowledge Base Stats | Sections, pillars, source domains, counts | read-only, idempotent |
 | `get_term` | Get Glossary Term | Term definition + facets | read-only, idempotent |
+| `list_terms` | List Glossary Terms | Survey the glossary, paginated | read-only |
 | `get_related` | Get Related Content | Knowledge-graph neighbours of a page | read-only |
 | `list_frameworks` | List Reporting Frameworks | GRI, SASB, TCFD, ESRS, CDP, … | read-only |
 | `list_industries` | List Industries | IFRS/SASB-style industry taxonomy | read-only, idempotent |
 | `propose_term` | Propose Glossary Term | Submit a term proposal (human-gated) | write, needs token |
 | `tag_content` | Tag Content Facets | Update a page's facet tags | write, needs token |
+| `flag_content` | Flag Content for Curation | Queue a page for delist/remove/review | write, needs token |
 
 Every tool returns a human-readable `content` block and a machine-readable
 `structuredContent` payload validated against its declared `outputSchema`.
@@ -73,7 +75,7 @@ Failures return `isError: true` with a structured envelope
 |----------|---------|-------|
 | `ESG_HUB_API_BASE` | `https://esg-hub.ascent.partners` | REST API base |
 | `ESG_HUB_API_URL` | `https://esg-hub.ascent.partners` | Base used for display links |
-| `ESG_HUB_WRITE_TOKEN` | — | Required for `propose_term` / `tag_content` |
+| `ESG_HUB_WRITE_TOKEN` | — | Required for `propose_term` / `tag_content` / `flag_content` |
 
 ## Development
 
