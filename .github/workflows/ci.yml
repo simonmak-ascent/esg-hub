@@ -52,7 +52,7 @@ jobs:
 
       - name: Verify committed MCP dist is current
         run: |
-          if ! git diff --quiet -- mcp-server/dist; then
+          if ! git -c core.fileMode=false diff --quiet -- mcp-server/dist; then
             echo "::error::mcp-server/dist is stale — run 'cd mcp-server && npx tsc' and commit dist"
             git --no-pager diff --stat -- mcp-server/dist
             exit 1
