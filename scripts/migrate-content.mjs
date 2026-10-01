@@ -12,7 +12,7 @@ import fs from "fs";
 import path from "path";
 
 const JEKYLL_ROOT = "/home/ubuntu/esg-resources-github-repo";
-const SURREAL_ENDPOINT = process.env.SURREAL_ENDPOINT || "";
+const SURREAL_URL = process.env.SURREAL_URL || "";
 const SURREAL_USERNAME = process.env.SURREAL_USERNAME || "root";
 const SURREAL_PASSWORD = process.env.SURREAL_PASSWORD || "";
 const SURREAL_NAMESPACE = getNamespace();
@@ -32,7 +32,7 @@ const SKIP_DIRS = new Set([
 ]);
 
 async function querySurreal(sql) {
-  const res = await fetch(`${SURREAL_ENDPOINT}/sql`, {
+  const res = await fetch(`${SURREAL_URL}/sql`, {
     method: "POST",
     headers: {
       "Content-Type": "text/plain",
@@ -129,7 +129,7 @@ function findMarkdownFiles(dir, relativeTo) {
 async function main() {
   console.log("Starting content migration from Jekyll to SurrealDB...");
   console.log(`Source: ${JEKYLL_ROOT}`);
-  console.log(`Target: ${SURREAL_ENDPOINT} (ns: ${SURREAL_NAMESPACE}, db: ${SURREAL_DATABASE})`);
+  console.log(`Target: ${SURREAL_URL} (ns: ${SURREAL_NAMESPACE}, db: ${SURREAL_DATABASE})`);
 
   // Clear existing pages
   console.log("\nClearing existing pages...");

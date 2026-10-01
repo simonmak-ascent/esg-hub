@@ -8,10 +8,9 @@
  * Requires: PERPLEXITY_API_KEY, ESG_HUB_WRITE_TOKEN (optional, for PATCH proposals).
  */
 
-import { getDbEnv } from "./lib/db-env.mjs";
+import { getDbEnv, querySurrealAll } from "./lib/db-env.mjs";
 
 const env = getDbEnv();
-const SQL_BASE = `${env.endpoint}/sql`;
 
 const args = process.argv.slice(2);
 const daysIdx = args.indexOf("--target-days");
@@ -29,22 +28,8 @@ const OWNER = `rd-loop-${process.pid}-${Date.now()}`;
 // ---------------------------------------------------------------------------
 
 async function q(body) {
-  const res = await fetch(SQL_BASE, {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/plain",
-      Accept: "application/json",
-      "surreal-ns": env.namespace,
-      "surreal-db": env.database,
-      Authorization: "Basic " + Buffer.from(`${env.username}:${env.password}`).toString("base64"),
-    },
-    body,
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`SurrealDB error ${res.status}: ${text}`);
-  }
-  return (await res.json())[0]?.result;
+  const results = await querySurrealAll(body, env);
+  return results[0]?.result;
 }
 
 const esc = (s) => String(s ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");

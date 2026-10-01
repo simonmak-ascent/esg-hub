@@ -4,14 +4,14 @@
  */
 
 import { getNamespace } from "./lib/db-env.mjs";
-const SURREAL_ENDPOINT = process.env.SURREAL_ENDPOINT || "";
+const SURREAL_URL = process.env.SURREAL_URL || "";
 const SURREAL_USERNAME = process.env.SURREAL_USERNAME || "root";
 const SURREAL_PASSWORD = process.env.SURREAL_PASSWORD || "";
 const SURREAL_NAMESPACE = getNamespace();
 const SURREAL_DATABASE = process.env.SURREAL_DATABASE || "main";
 
 async function querySurreal(sql) {
-  const res = await fetch(`${SURREAL_ENDPOINT}/sql`, {
+  const res = await fetch(`${SURREAL_URL}/sql`, {
     method: "POST",
     headers: {
       "Content-Type": "text/plain",
@@ -3312,7 +3312,7 @@ The LEAP framework guides nature risk assessment:
 
 async function main() {
   console.log("Adding new ESG Hub content to SurrealDB...");
-  console.log(`Target: ${SURREAL_ENDPOINT}`);
+  console.log(`Target: ${SURREAL_URL}`);
   console.log(`Namespace: ${SURREAL_NAMESPACE}, Database: ${SURREAL_DATABASE}`);
   console.log(`Articles to add: ${articles.length}\n`);
 

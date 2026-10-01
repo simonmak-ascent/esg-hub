@@ -10,7 +10,7 @@
  *   node scripts/migrate-i18n-fields.mjs
  * 
  * Or run directly via SurrealDB CLI:
- *   surreal sql --conn $SURREAL_ENDPOINT --user $SURREAL_USERNAME --pass $SURREAL_PASSWORD --ns $SURREAL_NAMESPACE --db $SURREAL_DATABASE --pretty
+ *   surreal sql --conn $SURREAL_URL --user $SURREAL_USERNAME --pass $SURREAL_PASSWORD --ns $SURREAL_NAMESPACE --db $SURREAL_DATABASE --pretty
  * 
  * Then execute these SurrealQL commands:
  *   ALTER TABLE page ADD FIELD IF NOT EXISTS title_zh TYPE option<string>;
@@ -22,20 +22,20 @@
  */
 
 import { getNamespace } from "./lib/db-env.mjs";
-const SURREAL_ENDPOINT = process.env.SURREAL_ENDPOINT;
+const SURREAL_URL = process.env.SURREAL_URL;
 const SURREAL_USERNAME = process.env.SURREAL_USERNAME;
 const SURREAL_PASSWORD = process.env.SURREAL_PASSWORD;
 const SURREAL_NAMESPACE = getNamespace();
 const SURREAL_DATABASE = process.env.SURREAL_DATABASE;
 
-if (!SURREAL_ENDPOINT || !SURREAL_USERNAME || !SURREAL_PASSWORD || !SURREAL_DATABASE) {
+if (!SURREAL_URL || !SURREAL_USERNAME || !SURREAL_PASSWORD || !SURREAL_DATABASE) {
   console.error("Error: Missing required environment variables.");
-  console.error("Required: SURREAL_ENDPOINT, SURREAL_USERNAME, SURREAL_PASSWORD, SURREAL_DATABASE");
+  console.error("Required: SURREAL_URL, SURREAL_USERNAME, SURREAL_PASSWORD, SURREAL_DATABASE");
   process.exit(1);
 }
 
 async function querySurreal(sql) {
-  const res = await fetch(`${SURREAL_ENDPOINT}/sql`, {
+  const res = await fetch(`${SURREAL_URL}/sql`, {
     method: "POST",
     headers: {
       "Content-Type": "text/plain",
@@ -66,7 +66,7 @@ const migrations = [
 
 async function main() {
   console.log("🔄 Running i18n fields migration...");
-  console.log(`Endpoint: ${SURREAL_ENDPOINT}`);
+  console.log(`Endpoint: ${SURREAL_URL}`);
   console.log(`Namespace: ${SURREAL_NAMESPACE}`);
   console.log(`Database: ${SURREAL_DATABASE}`);
   console.log("");

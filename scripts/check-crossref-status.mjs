@@ -1,12 +1,12 @@
 import { getNamespace } from "./lib/db-env.mjs";
-const SURREAL_ENDPOINT = (process.env.SURREAL_ENDPOINT || "");
+const SURREAL_URL = (process.env.SURREAL_URL || "");
 const SURREAL_USERNAME = "root";
 const SURREAL_PASSWORD = process.env.SURREAL_PASSWORD || "";
 const SURREAL_NAMESPACE = getNamespace();
 const SURREAL_DATABASE = "main";
 
 async function querySurreal(sql) {
-  const res = await fetch(`${SURREAL_ENDPOINT}/sql`, {
+  const res = await fetch(`${SURREAL_URL}/sql`, {
     method: "POST",
     headers: {
       "Content-Type": "text/plain",

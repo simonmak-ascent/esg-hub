@@ -11,7 +11,7 @@
 import { getNamespace } from "./lib/db-env.mjs";
 import Surreal from "surrealdb";
 
-const SURREAL_ENDPOINT = process.env.SURREAL_ENDPOINT || "";
+const SURREAL_URL = process.env.SURREAL_URL || "";
 const SURREAL_USERNAME = process.env.SURREAL_USERNAME || "root";
 const SURREAL_PASSWORD = process.env.SURREAL_PASSWORD || "";
 const SURREAL_NAMESPACE = getNamespace();
@@ -23,7 +23,7 @@ async function main() {
   console.log("Connecting to SurrealDB...");
   
   try {
-    await db.connect(`${SURREAL_ENDPOINT}/rpc`);
+    await db.connect(`${SURREAL_URL}/rpc`);
     await db.signin({
       username: SURREAL_USERNAME,
       password: SURREAL_PASSWORD,

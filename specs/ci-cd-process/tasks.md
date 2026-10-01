@@ -81,7 +81,7 @@ Implements: `specs/ci-cd-process/plan.md`
   - Checks: `.github/workflows/deploy.yml`, `.github/workflows/deploy-preview.yml`
   - Validation:
     - `rg 'secrets\.' .github/workflows/` shows all secrets use `${{ secrets.X }}` syntax
-    - `rg -v 'secrets\.' .github/workflows/ | rg 'VERCEL_TOKEN\|SURREAL_PASSWORD\|SURREAL_ENDPOINT'` returns no hardcoded values
+    - `rg -v 'secrets\.' .github/workflows/ | rg 'VERCEL_TOKEN\|SURREAL_PASSWORD\|SURREAL_URL'` returns no hardcoded values
     - No `.env` file reads in workflows
   - Depends on: TASK-003, TASK-005
   - AC Coverage: AC-8

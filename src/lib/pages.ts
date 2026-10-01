@@ -61,7 +61,7 @@ export interface LocalizedPage {
  * Exported for use in page components
  */
 export function isDbConfigured(): boolean {
-  const hasEndpoint = !!process.env.SURREAL_ENDPOINT;
+  const hasEndpoint = !!process.env.SURREAL_URL;
   const hasUsername = !!process.env.SURREAL_USERNAME;
   const hasPassword = !!process.env.SURREAL_PASSWORD;
   // SURREAL_NAMESPACE is hardcoded in surrealdb.ts ("esg_hub") — always present
@@ -69,7 +69,7 @@ export function isDbConfigured(): boolean {
 
   if (!hasEndpoint || !hasUsername || !hasPassword || !hasDatabase) {
     console.error("[pages] DB misconfigured — missing env vars:", {
-      SURREAL_ENDPOINT: hasEndpoint ? "set" : "MISSING",
+      SURREAL_URL: hasEndpoint ? "set" : "MISSING",
       SURREAL_USERNAME: hasUsername ? "set" : "MISSING",
       SURREAL_PASSWORD: hasPassword ? "set" : "MISSING",
       SURREAL_NAMESPACE: "esg_hub (hardcoded)",
@@ -141,7 +141,7 @@ export async function getPageByPermalink(
     console.error("[pages] Error fetching page:", error);
     console.error("[pages] Error details:", {
       permalink: normalized,
-      endpoint: process.env.SURREAL_ENDPOINT?.substring(0, 30) + "...",
+      endpoint: process.env.SURREAL_URL?.substring(0, 30) + "...",
       errorMessage: error instanceof Error ? error.message : String(error)
     });
     return DB_ERROR;

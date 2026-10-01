@@ -1,0 +1,24 @@
+{
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "maintainers": ["simonplmak-cloud"],
+  "name": "esg-hub",
+  "description": "ESG knowledge base for AI agents — hybrid search, glossary terms, reporting frameworks, industry taxonomy, and knowledge-graph traversal over the ESG Hub.",
+  "repository": "https://github.com/simonplmak-cloud/esg-hub",
+  "license": "MIT",
+  "runtime": "node",
+  "installInstructions": {
+    "npm": "npx -y @simonmak-ascent/esg-hub-mcp",
+    "remote": "https://esg-hub.ascent.partners/api/mcp"
+  },
+  "categories": ["knowledge-and-memory", "research-and-data", "open-data"],
+  "keywords": [
+    "esg",
+    "sustainability",
+    "knowledge-base",
+    "gri",
+    "tcfd",
+    "csrd",
+    "mcp",
+    "model-context-protocol"
+  ]
+}

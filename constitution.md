@@ -51,6 +51,10 @@ Last updated: 2026-07-19
 - No reading `.env`, `.env.local`, or `.env.production` files
 - No hardcoding `SURREAL_NAMESPACE` from env var in app code (already hardcoded to `"esg_hub"`)
 
+## Completion & Delivery Contract (MANDATORY)
+
+No task may be left unfinished. A task is complete only when it is implemented, verified on a compute box (`cs run`), committed and pushed, opened as a PR with evidence, **CI-green**, **merged to `main`**, **deployed to production**, and **E2E-verified against production**. The completing agent merges its own PR once required checks pass (squash-merge). Stopping at "code written" or "PR opened" is a failure. If blocked by a user-only secret or decision, exhaust the self-sufficiency ladder first, push everything completable, and record the exact unblocking action — never leave work dangling.
+
 ## File Structure Rules
 
 ```

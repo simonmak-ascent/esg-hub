@@ -6,14 +6,14 @@
 
 import { readFileSync } from 'fs';
 
-const SURREAL_ENDPOINT = process.env.SURREAL_ENDPOINT || "";
+const SURREAL_URL = process.env.SURREAL_URL || "";
 const SURREAL_NS = 'esg_hub';
 const SURREAL_DB = 'main';
 const SURREAL_USER = 'root';
 const SURREAL_PASS = process.env.SURREAL_PASSWORD || "";
 
 async function query(sql) {
-  const res = await fetch(`${SURREAL_ENDPOINT}/sql`, {
+  const res = await fetch(`${SURREAL_URL}/sql`, {
     method: 'POST',
     headers: {
       'Content-Type': 'text/plain',

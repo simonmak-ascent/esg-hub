@@ -15,7 +15,7 @@ from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 
 # SurrealDB connection
-SURREAL_ENDPOINT = os.environ.get("SURREAL_ENDPOINT", "")
+SURREAL_URL = os.environ.get("SURREAL_URL", "")
 SURREAL_USERNAME = "root"
 SURREAL_PASSWORD = os.environ.get("SURREAL_PASSWORD", "")
 SURREAL_NAMESPACE = "esg_hub"
@@ -30,7 +30,7 @@ def surreal_query(sql):
     """Execute a SurrealQL query via HTTP."""
     auth = base64.b64encode(f"{SURREAL_USERNAME}:{SURREAL_PASSWORD}".encode()).decode()
     req = Request(
-        f"{SURREAL_ENDPOINT}/sql",
+        f"{SURREAL_URL}/sql",
         data=sql.encode("utf-8"),
         headers={
             "Content-Type": "text/plain",

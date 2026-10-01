@@ -4,7 +4,7 @@
 
 import Surreal from "surrealdb";
 
-const endpoint = (process.env.SURREAL_ENDPOINT || "");
+const endpoint = (process.env.SURREAL_URL || "");
 const db = new Surreal();
 
 async function main() {
