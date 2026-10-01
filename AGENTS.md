@@ -138,7 +138,32 @@ Content-work drivers (all dry-run-first; use them rather than ad-hoc SQL):
 
 ## Git
 
-- No commits unless explicitly requested; never force-push main.
+- Never force-push `main`.
+- Do not create empty commits; every commit carries a coherent change with its verification.
+
+---
+
+## Completion Contract (MANDATORY — no dangling work)
+
+Every task an LLM agent starts MUST be driven to a **fully shipped** state before the agent stops. A task is complete only when ALL of the following are true:
+
+1. **Implemented** — code/config/docs written and self-reviewable.
+2. **Verified on a compute box** — lint, typecheck, unit tests, and (where applicable) eval gates pass via `cs run` on `workbench` / `wcag-workforce` / `wcag-workforce-2`.
+3. **Committed + pushed** — conventional-commit messages on a feature branch.
+4. **PR opened** to `main`, with evidence (commands + observed results) in the description.
+5. **CI green** — all required checks (`check`, `validate`, PR-title, preview E2E) pass.
+6. **Merged to `main`** — the completing agent merges its own PR once required checks are green (squash-merge; delete the branch after).
+7. **Production deployed** — the `deploy.yml` run for the merge commit reaches a healthy production deployment.
+8. **E2E on production** — run the production E2E and smoke the affected endpoints/URLs
+   (e.g. `gh workflow run test.yml -f base_url=https://esg-hub.ascent.partners`, plus targeted `curl`/Playwright checks); attach the results.
+
+Rules:
+
+- **Never stop at "code written" or "PR opened".** Continue through merge, deploy, and production E2E.
+- **No partial phases.** Either complete a phase end-to-end (with its gate evidence) or do not start it.
+- **Blockers are the last resort.** Exhaust the self-sufficiency ladder (purpose-built API/MCP → `gh`/`vercel`/`cs` → Playwright → research → obtain the missing tool) before reporting a blocker. If genuinely blocked on a user-only secret or decision, push everything that IS completable, open/comment a tracking issue, and state the exact unblocking action — never silently leave work half-done.
+- **Evidence, not assertions.** Every completion claim is backed by a command run in the same session; no summary claim without fresh output.
+
 ---
 
 <!-- opencode-supervisor -->
@@ -155,7 +180,7 @@ Core rules (full playbook: load the `copilot-supervisor` skill):
   see the `copilot-supervisor` skill for exact commands).
 - Review PRs authored by `copilot-swe-agent[bot]`; send numbered change
   requests to `@copilot` instead of pushing fixes; approve when ready.
-- Never merge PRs — the human merges.
+- **Finish the job.** Merge your own PR once required checks are green, then verify the production deploy and run production E2E — see the **Completion Contract** above. Do not leave work dangling for a human to merge. (When acting *only* as a reviewer of another agent's PR, approve and hand off, but the dispatched task itself must still reach production.)
 - Use the `context7` and `gh_grep` MCP servers to ground guidance in docs
   and real-world code patterns.
 <!-- /opencode-supervisor -->
