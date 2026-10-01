@@ -6,28 +6,28 @@
  * Run: node scripts/check-translation-coverage.mjs
  * 
  * Prerequisites:
- * - Set SURREAL_ENDPOINT, SURREAL_USERNAME, SURREAL_PASSWORD, SURREAL_DATABASE
+ * - Set SURREAL_URL, SURREAL_USERNAME, SURREAL_PASSWORD, SURREAL_DATABASE
  */
 
 import { getNamespace } from "./lib/db-env.mjs";
 import Surreal from "surrealdb";
 
-const SURREAL_ENDPOINT = process.env.SURREAL_ENDPOINT;
+const SURREAL_URL = process.env.SURREAL_URL;
 const SURREAL_USERNAME = process.env.SURREAL_USERNAME;
 const SURREAL_PASSWORD = process.env.SURREAL_PASSWORD;
 const SURREAL_NAMESPACE = getNamespace();
 const SURREAL_DATABASE = process.env.SURREAL_DATABASE;
 
-if (!SURREAL_ENDPOINT || !SURREAL_USERNAME || !SURREAL_PASSWORD || !SURREAL_DATABASE) {
+if (!SURREAL_URL || !SURREAL_USERNAME || !SURREAL_PASSWORD || !SURREAL_DATABASE) {
   console.error("Error: Missing required environment variables.");
-  console.error("Required: SURREAL_ENDPOINT, SURREAL_USERNAME, SURREAL_PASSWORD, SURREAL_DATABASE");
+  console.error("Required: SURREAL_URL, SURREAL_USERNAME, SURREAL_PASSWORD, SURREAL_DATABASE");
   process.exit(1);
 }
 
 const db = new Surreal();
 
 async function connectDB() {
-  await db.connect(`${SURREAL_ENDPOINT}/rpc`);
+  await db.connect(`${SURREAL_URL}/rpc`);
   await db.use({ namespace: SURREAL_NAMESPACE, database: SURREAL_DATABASE });
   await db.signin({ username: SURREAL_USERNAME, password: SURREAL_PASSWORD });
 }

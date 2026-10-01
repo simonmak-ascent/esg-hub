@@ -17,7 +17,7 @@ Purpose: record of environment state before/after each change per spec `spec.md`
 | Last green run | 2026-03-01 (run 22539797324, 7m27s) | `gh run list` |
 | `Deploy Preview to Vercel` | ⚪ no recent runs (no PRs) | — |
 | Branch protection on `main` | 🔴 none | protection API 404 "Branch not protected" |
-| Secrets inventory | 🟢 9/9 present | SURREAL_ENDPOINT, SURREAL_USERNAME, SURREAL_PASSWORD, SURREAL_NAMESPACE, SURREAL_DATABASE, TOOL_PACKAGES_PAT, VERCEL_ORG_ID, VERCEL_PROJECT_ID, VERCEL_TOKEN |
+| Secrets inventory | 🟢 9/9 present | SURREAL_URL, SURREAL_USERNAME, SURREAL_PASSWORD, SURREAL_NAMESPACE, SURREAL_DATABASE, TOOL_PACKAGES_PAT, VERCEL_ORG_ID, VERCEL_PROJECT_ID, VERCEL_TOKEN |
 | Dependabot alerts / auto-fixes | 🔴 alerts 404 (disabled); auto-fixes `{"enabled":false}` | API |
 | Security analysis (secret scanning/CodeQL) | 🔴 not configured; `security_and_analysis` empty | API |
 | gh CLI / git auth | 🔴 authenticated as `humanity4ai` → repo 404s | `gh auth status`; `git ls-remote` "Repository not found" |

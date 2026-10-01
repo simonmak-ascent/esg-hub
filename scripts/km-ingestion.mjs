@@ -8,14 +8,13 @@
  * Usage: node scripts/km-ingestion.mjs [--schedule "0 6,18 * * *"] [--pipeline-version "1.0.0"]
  */
 
-import { getDbEnv } from "./lib/db-env.mjs";
+import { getDbEnv, querySurrealAll } from "./lib/db-env.mjs";
 import { fetchSource, computeChecksum } from "./lib/pipeline-fetcher.mjs";
 import { normalizeHTML, normalizeJSON, canonicalizeText } from "./lib/pipeline-normalizer.mjs";
 import { extractEntities, verifyExtraction } from "./lib/pipeline-llm.mjs";
 import { initEmbedder, embed } from "./lib/pipeline-embedder.mjs";
 
 const env = getDbEnv();
-const SQL_BASE = `${env.endpoint}/sql`;
 
 const args = process.argv.slice(2);
 const scheduleIdx = args.indexOf("--schedule");
@@ -42,22 +41,8 @@ process.on("SIGTERM", () => {
 // ---------------------------------------------------------------------------
 
 async function q(body) {
-  const res = await fetch(SQL_BASE, {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/plain",
-      Accept: "application/json",
-      "surreal-ns": env.namespace,
-      "surreal-db": env.database,
-      Authorization: "Basic " + Buffer.from(`${env.username}:${env.password}`).toString("base64"),
-    },
-    body,
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`SurrealDB error ${res.status}: ${text}`);
-  }
-  return (await res.json())[0]?.result;
+  const results = await querySurrealAll(body, env);
+  return results[0]?.result;
 }
 
 const esc = (s) => String(s ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");

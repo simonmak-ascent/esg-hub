@@ -257,7 +257,7 @@ WS-A through WS-E can be built in dependency order. Within WS-E, ingestion and R
    - PROPOSE: `POST /api/v1/terms` (glossary) + direct SurrealDB insert (external_resource, scrape_job updates). `fastembed-js` generates 384d vector.
 5. `REPORT`: update `scrape_job.completed_at`, log proposal count
 
-**Cron workflow:** schedule `17 6,18 * * *` (odd-minute, avoids hour-start congestion). `workflow_dispatch` fallback. Timeout-minutes: 240. Concurrency: `cancel-in-progress: false` (one run at a time, queue subsequent). Secrets: `SURREAL_ENDPOINT`, `SURREAL_USERNAME`, `SURREAL_PASSWORD`, `SURREAL_DATABASE`, `DEEPSEEK_API_KEY`, `ESG_HUB_WRITE_TOKEN`.
+**Cron workflow:** schedule `17 6,18 * * *` (odd-minute, avoids hour-start congestion). `workflow_dispatch` fallback. Timeout-minutes: 240. Concurrency: `cancel-in-progress: false` (one run at a time, queue subsequent). Secrets: `SURREAL_URL`, `SURREAL_USERNAME`, `SURREAL_PASSWORD`, `SURREAL_DATABASE`, `DEEPSEEK_API_KEY`, `ESG_HUB_WRITE_TOKEN`.
 
 **LLM configuration:**
 - Model: `deepseek-chat` for extract, `deepseek-reasoner` for verify

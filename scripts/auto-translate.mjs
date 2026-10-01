@@ -10,22 +10,22 @@
  * Prerequisites:
  * - Run migration script first: node scripts/migrate-i18n-fields.mjs
  * - Set DEEPSEEK_API_KEY environment variable
- * - Set SURREAL_ENDPOINT, SURREAL_USERNAME, SURREAL_PASSWORD, SURREAL_DATABASE
+ * - Set SURREAL_URL, SURREAL_USERNAME, SURREAL_PASSWORD, SURREAL_DATABASE
  */
 
 import { getNamespace } from "./lib/db-env.mjs";
 import Surreal from "surrealdb";
 
-const SURREAL_ENDPOINT = process.env.SURREAL_ENDPOINT;
+const SURREAL_URL = process.env.SURREAL_URL;
 const SURREAL_USERNAME = process.env.SURREAL_USERNAME;
 const SURREAL_PASSWORD = process.env.SURREAL_PASSWORD;
 const SURREAL_NAMESPACE = getNamespace();
 const SURREAL_DATABASE = process.env.SURREAL_DATABASE;
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 
-if (!SURREAL_ENDPOINT || !SURREAL_USERNAME || !SURREAL_PASSWORD || !SURREAL_DATABASE) {
+if (!SURREAL_URL || !SURREAL_USERNAME || !SURREAL_PASSWORD || !SURREAL_DATABASE) {
   console.error("Error: Missing required environment variables.");
-  console.error("Required: SURREAL_ENDPOINT, SURREAL_USERNAME, SURREAL_PASSWORD, SURREAL_DATABASE");
+  console.error("Required: SURREAL_URL, SURREAL_USERNAME, SURREAL_PASSWORD, SURREAL_DATABASE");
   process.exit(1);
 }
 
@@ -37,7 +37,7 @@ if (!DEEPSEEK_API_KEY) {
 const db = new Surreal();
 
 async function connectDB() {
-  await db.connect(`${SURREAL_ENDPOINT}/rpc`);
+  await db.connect(`${SURREAL_URL}/rpc`);
   await db.use({ namespace: SURREAL_NAMESPACE, database: SURREAL_DATABASE });
   await db.signin({ username: SURREAL_USERNAME, password: SURREAL_PASSWORD });
   console.log("✅ Connected to SurrealDB");
@@ -105,7 +105,7 @@ async function updatePage(pageId, updates) {
 
 async function main() {
   console.log("🔄 Starting auto-translation...");
-  console.log(`Endpoint: ${SURREAL_ENDPOINT}`);
+  console.log(`Endpoint: ${SURREAL_URL}`);
   console.log(`Namespace: ${SURREAL_NAMESPACE}`);
   console.log(`Database: ${SURREAL_DATABASE}`);
   

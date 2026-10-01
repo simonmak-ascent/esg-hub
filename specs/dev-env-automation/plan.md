@@ -70,7 +70,7 @@ export function getDbEnv() {
   const override = process.env.ESG_HUB_NS_OVERRIDE;
   const namespace = override || "esg_hub";   // never read SURREAL_NAMESPACE (foreign shells shadow it)
   if (override) console.warn(`⚠️  NAMESPACE OVERRIDE: targeting "${namespace}" (not esg_hub)`);
-  return { endpoint: req("SURREAL_ENDPOINT"), username: req("SURREAL_USERNAME"), password: req("SURREAL_PASSWORD"), database: req("SURREAL_DATABASE"), namespace };
+  return { endpoint: req("SURREAL_URL"), username: req("SURREAL_USERNAME"), password: req("SURREAL_PASSWORD"), database: req("SURREAL_DATABASE"), namespace };
 }
 ```
 

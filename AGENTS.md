@@ -76,7 +76,7 @@ Secrets are shell-level (`~/.bashrc`), never in repo files. **Never read `.env*`
 
 | Variable | Notes |
 |----------|-------|
-| `SURREAL_ENDPOINT` / `SURREAL_USERNAME` / `SURREAL_PASSWORD` / `SURREAL_DATABASE` | SurrealDB Cloud; required for dev, build, `verify:db`. Use `opencode_admin` credentials from `~/.env.opencode` for schema mutations; `root` (Viewer) for read-only app queries. |
+| `SURREAL_URL` / `SURREAL_USERNAME` / `SURREAL_PASSWORD` / `SURREAL_DATABASE` | SurrealDB Cloud; required for dev, build, `verify:db`. Use `opencode_admin` credentials from `~/.env.opencode` for schema mutations; `root` (Viewer) for read-only app queries. |
 | `SURREAL_NAMESPACE` | Ignored by app code AND by `scripts/*.mjs` (both hardcode `esg_hub`; scripts override via `ESG_HUB_NS_OVERRIDE` only) |
 | `DEEPSEEK_API_KEY` | AI search/chat API routes + KM ingestion pipeline LLM calls |
 | `BRAVE_API_KEY` | Web search for the AI search feature (`src/app/api/ai-search/route.ts`) |

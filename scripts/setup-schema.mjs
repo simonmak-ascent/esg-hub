@@ -9,14 +9,14 @@
  */
 
 import { getNamespace } from "./lib/db-env.mjs";
-const SURREAL_ENDPOINT = process.env.SURREAL_ENDPOINT || "";
+const SURREAL_URL = process.env.SURREAL_URL || "";
 const SURREAL_USERNAME = process.env.SURREAL_USERNAME || "root";
 const SURREAL_PASSWORD = process.env.SURREAL_PASSWORD || "";
 const SURREAL_NAMESPACE = getNamespace();
 const SURREAL_DATABASE = process.env.SURREAL_DATABASE || "main";
 
 async function query(sql) {
-  const res = await fetch(`${SURREAL_ENDPOINT}/sql`, {
+  const res = await fetch(`${SURREAL_URL}/sql`, {
     method: "POST",
     headers: {
       "Content-Type": "text/plain",
@@ -87,7 +87,7 @@ DEFINE FIELD IF NOT EXISTS icon ON navigation TYPE option<string>;
 
 async function main() {
   console.log("Setting up ESG Hub schema in SurrealDB...");
-  console.log(`Endpoint: ${SURREAL_ENDPOINT}`);
+  console.log(`Endpoint: ${SURREAL_URL}`);
   console.log(`Namespace: ${SURREAL_NAMESPACE}`);
   console.log(`Database: ${SURREAL_DATABASE}`);
   

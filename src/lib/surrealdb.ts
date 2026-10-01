@@ -1,8 +1,14 @@
 import { Surreal } from "surrealdb";
 
 // Credentials are sourced exclusively from environment variables.
-// Set SURREAL_ENDPOINT, SURREAL_USERNAME, SURREAL_PASSWORD,
-// SURREAL_NAMESPACE, and SURREAL_DATABASE in your deployment environment.
+// Set SURREAL_URL, SURREAL_USERNAME, SURREAL_PASSWORD, and SURREAL_DATABASE in
+// your deployment environment. SURREAL_NAMESPACE is hardcoded to "esg_hub".
+//
+// Auth model: SurrealDB Cloud namespace/database users cannot authenticate with
+// HTTP Basic auth (that is root-scope only). We sign in with the JSON-RPC
+// `signin` method at namespace scope, cache the returned Bearer token (~1h TTL),
+// and send it on every query. A single re-signin is attempted on 401.
+//
 // NOTE: Access env vars inside functions, not at module level, for Vercel compatibility
 
 let dbInstance: Surreal | null = null;
@@ -14,12 +20,85 @@ function getEnvVars() {
   // .trim() guards against trailing newlines from how secrets were stored
   // (e.g. `echo "value" | gh secret set` appends a newline to the value).
   return {
-    endpoint: (process.env.SURREAL_ENDPOINT || "").trim(),
+    endpoint: (process.env.SURREAL_URL || "").trim(),
     username: (process.env.SURREAL_USERNAME || "").trim(),
     password: (process.env.SURREAL_PASSWORD || "").trim(),
     namespace: "esg_hub",
     database: (process.env.SURREAL_DATABASE || "").trim(),
   };
+}
+
+// ── Namespace-scoped auth token cache ───────────────────────────────────────
+
+type AuthToken = { token: string; expiresAt: number };
+let tokenCache: AuthToken | null = null;
+
+/** Sign in at namespace scope and cache the Bearer token (~55 min of a 1h TTL). */
+async function signin(): Promise<string> {
+  const env = getEnvVars();
+  const res = await fetch(`${env.endpoint}/rpc`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      id: 1,
+      method: "signin",
+      params: [{ user: env.username, pass: env.password, NS: env.namespace }],
+    }),
+    cache: "no-store",
+  });
+  const body = (await res.json().catch(() => null)) as
+    | { result?: unknown; error?: { message?: string } }
+    | null;
+  if (!res.ok || !body || body.error || typeof body.result !== "string") {
+    console.error(
+      `[SurrealDB] signin failed (HTTP ${res.status}) — ns=${env.namespace}`
+    );
+    throw new Error(`SurrealDB signin failed (HTTP ${res.status})`);
+  }
+  tokenCache = { token: body.result, expiresAt: Date.now() + 55 * 60 * 1000 };
+  return body.result;
+}
+
+async function getAuthToken(): Promise<string> {
+  if (tokenCache && tokenCache.expiresAt > Date.now()) {
+    return tokenCache.token;
+  }
+  return signin();
+}
+
+/**
+ * POST one JSON-RPC request with a namespace Bearer token. Retries once with a
+ * fresh token on 401 (expired/rotated token).
+ */
+async function rpcRequest(reqBody: unknown): Promise<{
+  ok: boolean;
+  status: number;
+  body: { result?: unknown; error?: { message?: string } } | null;
+}> {
+  const env = getEnvVars();
+  const send = (token: string) =>
+    fetch(`${env.endpoint}/rpc`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "surreal-ns": env.namespace,
+        "surreal-db": env.database,
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(reqBody),
+      cache: "no-store",
+    });
+
+  let res = await send(await getAuthToken());
+  if (res.status === 401) {
+    tokenCache = null;
+    res = await send(await getAuthToken());
+  }
+  const body = (await res.json().catch(() => null)) as
+    | { result?: unknown; error?: { message?: string } }
+    | null;
+  return { ok: res.ok, status: res.status, body };
 }
 
 export async function getDb(): Promise<Surreal> {
@@ -80,62 +159,35 @@ export async function queryHttp<T = unknown>(
   vars?: Record<string, unknown>
 ): Promise<T[]> {
   const env = getEnvVars();
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-    "surreal-ns": env.namespace,
-    "surreal-db": env.database,
-    Authorization:
-      "Basic " +
-      Buffer.from(`${env.username}:${env.password}`).toString(
-        "base64"
-      ),
-  };
-
-  // Build RPC request body
   const params: unknown[] = vars && Object.keys(vars).length > 0 ? [query, vars] : [query];
-  const reqBody = JSON.stringify({
-    id: 1,
-    method: "query",
-    params,
-  });
+  const { ok, status, body: resBody } = await rpcRequest({ id: 1, method: "query", params });
 
-  const res = await fetch(`${env.endpoint}/rpc`, {
-    method: "POST",
-    headers,
-    body: reqBody,
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    const errorText = await res.text().catch(() => "");
-    console.error(`[SurrealDB] HTTP ${res.status} — ns=${env.namespace} db=${env.database} endpoint=${env.endpoint.substring(0, 40)}: ${errorText}`);
-    throw new Error(`Database query failed (HTTP ${res.status})`);
+  if (!ok) {
+    console.error(`[SurrealDB] HTTP ${status} — ns=${env.namespace} db=${env.database}`);
+    throw new Error(`Database query failed (HTTP ${status})`);
   }
 
-  const resBody = await res.json();
-  
   // Handle JSON-RPC response format
-  if (resBody.error) {
-    console.error("[SurrealDB] RPC error:", JSON.stringify(resBody.error), `— ns=${env.namespace} db=${env.database}`);
+  if (resBody?.error) {
+    console.error("[SurrealDB] RPC error:", JSON.stringify(resBody.error));
     throw new Error(`Database query returned an error: ${resBody.error.message}`);
   }
 
   // RPC response: { result: [...], status: "OK", time: "..." }
-  const rpcResult = resBody.result;
+  const rpcResult = resBody?.result;
   if (!Array.isArray(rpcResult) || rpcResult.length === 0) {
     console.error("[SurrealDB] Unexpected response format:", JSON.stringify(resBody).slice(0, 500));
     throw new Error("Database returned an unexpected response format");
   }
 
   // Return the result from the last statement
-  const last = rpcResult[rpcResult.length - 1];
+  const last = rpcResult[rpcResult.length - 1] as { status?: string; result?: unknown };
   if (last?.status !== "OK") {
     console.error("[SurrealDB] Query error:", JSON.stringify(last));
     throw new Error("Database query returned an error");
   }
 
-  return Array.isArray(last.result) ? last.result : [];
+  return Array.isArray(last.result) ? (last.result as T[]) : [];
 }
 
 /**
@@ -146,46 +198,22 @@ export async function queryHttpAll<T = unknown>(
 ): Promise<
   Array<{ result: T[]; status: string; time: string }>
 > {
-  const env = getEnvVars();
-  
-  // Build RPC request body
-  const reqBody = JSON.stringify({
+  const { ok, status, body: resBody } = await rpcRequest({
     id: 1,
     method: "query",
     params: [query],
   });
-  
-  const res = await fetch(`${env.endpoint}/rpc`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      "surreal-ns": env.namespace,
-      "surreal-db": env.database,
-      Authorization:
-        "Basic " +
-        Buffer.from(`${env.username}:${env.password}`).toString(
-          "base64"
-        ),
-    },
-    body: reqBody,
-    cache: "no-store",
-  });
 
-  if (!res.ok) {
-    const errorText = await res.text().catch(() => "");
-    console.error(`[SurrealDB] HTTP ${res.status}: ${errorText}`);
-    throw new Error(`Database query failed (HTTP ${res.status})`);
+  if (!ok) {
+    console.error(`[SurrealDB] HTTP ${status}`);
+    throw new Error(`Database query failed (HTTP ${status})`);
   }
 
-  const resBody = await res.json();
-  
-  // Handle JSON-RPC response format
-  if (resBody.error) {
+  if (resBody?.error) {
     console.error("[SurrealDB] RPC error:", JSON.stringify(resBody.error));
     throw new Error(`Database query returned an error: ${resBody.error.message}`);
   }
 
   // Return the result array directly
-  return resBody.result || [];
+  return (resBody?.result as Array<{ result: T[]; status: string; time: string }>) || [];
 }

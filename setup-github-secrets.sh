@@ -56,7 +56,7 @@ echo ""
 declare -A secrets=(
     ["VERCEL_ORG_ID"]="team_WdRBvuyKYcVGwtSk1T9dIoaY"
     ["VERCEL_PROJECT_ID"]="prj_8xuRJNmQRl2mF9qiR7nEWrQIJPwk"
-    ["SURREAL_ENDPOINT"]="https://valuation-webap-06dvm6i94trq92goln8f5gebnk.aws-euw1.surreal.cloud"
+    ["SURREAL_URL"]="https://valuation-webap-06dvm6i94trq92goln8f5gebnk.aws-euw1.surreal.cloud"
     ["SURREAL_USERNAME"]="root"
     ["SURREAL_PASSWORD"]="ValuationApp2026!"
     ["SURREAL_NAMESPACE"]="esg_hub"

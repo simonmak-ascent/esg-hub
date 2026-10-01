@@ -12,31 +12,12 @@
  * - page.last_verified field exists
  */
 
-import { getNamespace } from "./lib/db-env.mjs";
-const SURREAL_ENDPOINT = process.env.SURREAL_ENDPOINT || "";
-const SURREAL_USERNAME = process.env.SURREAL_USERNAME || "root";
-const SURREAL_PASSWORD = process.env.SURREAL_PASSWORD || "";
-const SURREAL_NAMESPACE = getNamespace();
-const SURREAL_DATABASE = process.env.SURREAL_DATABASE || "main";
+import { getDbEnv, querySurrealAll } from "./lib/db-env.mjs";
+
+const env = getDbEnv();
 
 async function querySurreal(sql) {
-  const res = await fetch(`${SURREAL_ENDPOINT}/sql`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/plain",
-      "Accept": "application/json",
-      "surreal-ns": SURREAL_NAMESPACE,
-      "surreal-db": SURREAL_DATABASE,
-      "Authorization": "Basic " + Buffer.from(`${SURREAL_USERNAME}:${SURREAL_PASSWORD}`).toString("base64"),
-    },
-    body: sql,
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`SurrealDB error ${res.status}: ${text}`);
-  }
-  return res.json();
+  return querySurrealAll(sql, env);
 }
 
 async function verifySchema() {

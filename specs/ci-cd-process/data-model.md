@@ -12,7 +12,7 @@ All secrets are stored in GitHub repo → Settings → Secrets and variables →
 | `VERCEL_ORG_ID` | Both workflows | Yes | Vercel team ID (passed as `?teamId=` query param) |
 | `VERCEL_PROJECT_ID` | Both workflows | Yes | Vercel project ID |
 | `VERCEL_TOKEN` | Both workflows | Yes | Vercel personal access token (full account scope) |
-| `SURREAL_ENDPOINT` | Both workflows (check jobs) | No | SurrealDB Cloud URL; needed for `pnpm build` (SSR pages query DB at build time); also for `verify:db` (production only) |
+| `SURREAL_URL` | Both workflows (check jobs) | No | SurrealDB Cloud URL; needed for `pnpm build` (SSR pages query DB at build time); also for `verify:db` (production only) |
 | `SURREAL_USERNAME` | Both workflows (check jobs) | No | `root` |
 | `SURREAL_PASSWORD` | Both workflows (check jobs) | No | SurrealDB password |
 | `SURREAL_DATABASE` | Both workflows (check jobs) | No | `main` |
@@ -25,11 +25,11 @@ All secrets are stored in GitHub repo → Settings → Secrets and variables →
 
 | Secret | Step | Reasoning |
 |--------|------|-----------|
-| `SURREAL_ENDPOINT` | `pnpm verify:db` | DB connectivity check |
+| `SURREAL_URL` | `pnpm verify:db` | DB connectivity check |
 | `SURREAL_USERNAME` | `pnpm verify:db` | DB auth |
 | `SURREAL_PASSWORD` | `pnpm verify:db` | DB auth |
 | `SURREAL_DATABASE` | `pnpm verify:db` | DB selection |
-| `SURREAL_ENDPOINT` | `pnpm build` | `next build` may invoke SSR pages that query DB |
+| `SURREAL_URL` | `pnpm build` | `next build` may invoke SSR pages that query DB |
 | `SURREAL_USERNAME` | `pnpm build` | Same as above |
 | `SURREAL_PASSWORD` | `pnpm build` | Same as above |
 | `SURREAL_DATABASE` | `pnpm build` | Same as above |
@@ -38,7 +38,7 @@ All secrets are stored in GitHub repo → Settings → Secrets and variables →
 
 | Secret | Step | Reasoning |
 |--------|------|-----------|
-| `SURREAL_ENDPOINT` | `pnpm build` | `next build` may invoke SSR pages that query DB |
+| `SURREAL_URL` | `pnpm build` | `next build` may invoke SSR pages that query DB |
 | `SURREAL_USERNAME` | `pnpm build` | Same as above |
 | `SURREAL_PASSWORD` | `pnpm build` | Same as above |
 | `SURREAL_DATABASE` | `pnpm build` | Same as above |
@@ -78,7 +78,7 @@ These are NOT GitHub secrets but Vercel project settings that must be pre-config
 
 | Variable | Environment | Notes |
 |----------|------------|-------|
-| `SURREAL_ENDPOINT` | Production, Preview | DB connection |
+| `SURREAL_URL` | Production, Preview | DB connection |
 | `SURREAL_USERNAME` | Production, Preview | `root` |
 | `SURREAL_PASSWORD` | Production, Preview | DB password |
 | `SURREAL_DATABASE` | Production, Preview | `main` |

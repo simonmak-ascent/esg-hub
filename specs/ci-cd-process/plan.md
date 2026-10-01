@@ -93,7 +93,7 @@ Two GitHub Actions workflows share a common quality gate (lint → typecheck →
 ## Integration Points
 
 - **Vercel REST API:** `POST /v13/deployments?teamId=<orgId>` creates deployment from git SHA; `GET /v13/deployments/{id}` polls status. Contract in `contracts/vercel-api.md`.
-- **GitHub Secrets:** `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `VERCEL_TOKEN`, `SURREAL_ENDPOINT`, `SURREAL_USERNAME`, `SURREAL_PASSWORD`, `SURREAL_DATABASE`. Config reference in `data-model.md`.
+- **GitHub Secrets:** `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `VERCEL_TOKEN`, `SURREAL_URL`, `SURREAL_USERNAME`, `SURREAL_PASSWORD`, `SURREAL_DATABASE`. Config reference in `data-model.md`.
 - **GitHub Actions contexts:** `github.ref_name` (branch), `github.sha` (commit), `steps.<id>.outputs` (deploy URL propagation between steps)
 
 ## AC Coverage Map
