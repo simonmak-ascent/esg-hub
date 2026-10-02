@@ -150,7 +150,7 @@ Content-work drivers (all dry-run-first; use them rather than ad-hoc SQL):
 ### Definition of done — all eight, in order
 
 1. **Implemented** — code/config/docs written and self-reviewable.
-2. **Verified on a compute box** — lint, typecheck, unit tests, and (where applicable) eval gates pass via `cs run` on any provisioned compute box.
+2. **Verified on a compute box** — lint, typecheck, unit tests, and (where applicable) eval gates pass on a provisioned compute box.
 3. **Committed + pushed** — conventional-commit messages on a feature branch.
 4. **PR opened** to `main`, with evidence (commands + observed results) in the description.
 5. **CI green** — all required checks (`check`, `validate`, PR-title, preview E2E) pass.
