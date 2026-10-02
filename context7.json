@@ -1,0 +1,42 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "ESG Hub",
+  "description": "Open-access ESG encyclopedia by Ascent Partners Foundation (350+ articles in English, Chinese and Hindi) with a public REST API and an MCP server that lets AI agents search and read ESG, sustainability and climate content.",
+  "folders": [
+    "mcp-server"
+  ],
+  "rules": [
+    "The public REST API base is https://esg-hub.ascent.partners/api/v1 (no auth): /pages, /search?q=..., /resources, /meta.",
+    "The MCP server in mcp-server/ exposes 12 tools: 10 read-only (search_esg, search_content, get_esg_page, list_esg_pages, list_esg_resources, get_esg_metadata, get_term, get_related, list_frameworks, list_industries) and 2 write tools (propose_term, tag_content) that need ESG_HUB_WRITE_TOKEN.",
+    "Paginate list tools with the returned `structuredContent.pagination.next_offset`.",
+    "Cite the article permalink returned by get_esg_page when quoting ESG Hub content."
+  ],
+  "excludeFolders": [
+    "node_modules",
+    "dist",
+    "build",
+    ".next",
+    ".cache",
+    "tests",
+    "tests-webapp",
+    "e2e",
+    "test-results",
+    "**/__pycache__",
+    ".github",
+    ".opencode",
+    ".devcontainer",
+    "specs",
+    "marketing",
+    "overrides"
+  ],
+  "excludeFiles": [
+    "CHANGELOG.md",
+    "CODE_OF_CONDUCT.md",
+    "LICENSE",
+    "LICENSE.md",
+    "LICENSE-CONTENT.md",
+    "SECURITY.md",
+    "GITHUB_SETUP.md",
+    "VERCEL_PROTECTION_FIX.md"
+  ]
+}

@@ -44,6 +44,14 @@ Useful commands: `pnpm lint` · `npx tsc --noEmit` · `npx vitest run` · `pnpm 
 - **Bugs and code changes**: see [CONTRIBUTING.md](CONTRIBUTING.md)
 - **Security vulnerabilities**: report privately via [SECURITY.md](SECURITY.md)
 
+## Use with Context7
+
+Up-to-date ESG Hub documentation is indexed on [Context7](https://context7.com/simonplmak-cloud/esg-hub), so coding agents can pull it into context on demand. With the Context7 MCP server or `ctx7` CLI installed, name the library in your prompt:
+
+```text
+use library /simonplmak-cloud/esg-hub for API and docs
+```
+
 ## License
 
 - **Code:** [MIT](LICENSE)
