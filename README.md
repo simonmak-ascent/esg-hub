@@ -1,10 +1,12 @@
 # ESG Hub — Open-Access ESG Encyclopedia
 
 [![Deploy to Vercel](https://github.com/simonplmak-cloud/esg-hub/actions/workflows/deploy.yml/badge.svg)](https://github.com/simonplmak-cloud/esg-hub/actions/workflows/deploy.yml)
-[![License: MIT (code)](https://img.shields.io/badge/code-MIT-green.svg)](LICENSE)
+[![License: MIT (code)](https://img.shields.io/badge/code-MIT-yellow.svg)](LICENSE)
 [![Content: CC BY-SA 4.0](https://img.shields.io/badge/content-CC%20BY--SA%204.0-blue.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
 
-**[esg-hub.ascent.partners](https://esg-hub.ascent.partners)** — a free, open-access encyclopedia of Environmental, Social, and Governance (ESG) knowledge by [Ascent Partners Foundation](https://www.ascent.partners): 350+ articles, 240+ curated external resources, books, courses, and a video library — available in English, Chinese, and Hindi.
+> **An open-access encyclopedia of Environmental, Social, and Governance (ESG) knowledge by [Ascent Partners Foundation](https://www.ascent.partners)** — 350+ articles, 240+ curated resources, books, courses, AI search, a public REST API, and an MCP server. Available in English, Chinese, and Hindi.
+
+**Live site:** [esg-hub.ascent.partners](https://esg-hub.ascent.partners)
 
 ## Features
 
@@ -15,11 +17,11 @@
 - **Learning resources** — free courses, books, and a curated video library
 - **i18n** — English, Chinese, Hindi
 
-## Tech stack
+## Tech Stack
 
 Next.js 15 (App Router, React 19) · SurrealDB Cloud · Tailwind CSS v4 · next-intl · Vitest + Playwright · Vercel
 
-## Quick start
+## Quick Start
 
 ```bash
 git clone https://github.com/simonplmak-cloud/esg-hub.git
@@ -56,3 +58,9 @@ use library /simonplmak-cloud/esg-hub for API and docs
 
 - **Code:** [MIT](LICENSE)
 - **Encyclopedia content:** [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) by Ascent Partners Foundation
+
+---
+
+An [Ascent Partners Foundation](https://www.ascent.partners) project.
+
+If this saves you time, a ⭐ on GitHub helps others find it.
