@@ -1,0 +1,5 @@
+# Internal process state — never commit (data hygiene for a public repo)
+work/
+backup/
+backup-crossref-*.json
+backup-thin-descriptions.json
