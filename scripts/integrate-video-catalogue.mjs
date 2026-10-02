@@ -14,7 +14,7 @@ import fs from "node:fs";
 
 const DRY_RUN = !process.argv.includes("--apply");
 const csvIdx = process.argv.indexOf("--csv");
-const CSV_PATH = csvIdx > -1 ? process.argv[csvIdx + 1] : "/mnt/c/tmp/esg_video_catalogue_v6_superset.csv";
+const CSV_PATH = csvIdx > -1 ? process.argv[csvIdx + 1] : "./esg_video_catalogue_v6_superset.csv";
 
 const DEAD_LINK_FIXES = [
   ["https://www.youtube.com/@TNFD_", "https://www.youtube.com/channel/UCxr65yI_szV8UODfmyuhTzw"],

@@ -66,7 +66,7 @@ Dedupe vs current DB content (URL + normalized title) + editorial flags, 2026-07
 
 Flags: `--dry-run` (default), `--apply`.
 
-1. Parse CSV (path constant `/mnt/c/tmp/esg_video_catalogue_v6_superset.csv`, overridable via `--csv`); filter `status=active`
+1. Parse CSV (path constant `./esg_video_catalogue_v6_superset.csv`, overridable via `--csv`); filter `status=active`
 2. Fetch current content of `/learning/courses/` + `/learning/videos/` via `/sql` endpoint using `scripts/lib/db-env.mjs`
 3. Recompute dedupe at runtime (URL + normalized title); apply NEEDS-REVIEW exclusion; print classification table
 4. Verify every target URL: GET with browser UA, accept 200; accept 403/415 with a note; abort that record otherwise (never write unverified links)

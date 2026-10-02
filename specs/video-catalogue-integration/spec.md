@@ -10,7 +10,7 @@ Clean up verified-dead YouTube links in DB page content, review the curated v6 v
 
 ## Research Summary (2026-07-20)
 
-**CSV** (found at `/mnt/c/tmp/esg_video_catalogue_v6_superset.csv` — not `/mnt/c/` as briefed): 86 rows × 64 cols.
+**CSV** (provided out-of-band as `esg_video_catalogue_v6_superset.csv`): 86 rows × 64 cols.
 - **61 `delisted`** — editorial notes mark all as duplicates of earlier "v2" records ("Do NOT re-ingest") → excluded
 - **25 `active`** — GRI Academy ×5, JPX ×3 (2 Japanese), HKGFA ×3, OECD ×3, TI ×2, TNFD ×2, and 1 each from BURSA, ILO, ISCA, OSCE, UNCC, UNGC, WB
 - Types: course ×15, webinar ×4, video ×2, videoseries ×2, conferencetalk ×1, plus 1 other
@@ -82,7 +82,7 @@ Clean up verified-dead YouTube links in DB page content, review the curated v6 v
 
 ## Open Questions
 
-- [RESOLVED] CSV location → `/mnt/c/tmp/esg_video_catalogue_v6_superset.csv` (brief said `/mnt/c/`)
+- [RESOLVED] CSV location → supplied as an out-of-band input file
 - [RESOLVED] Delisted records → excluded per their editorial notes
 - [RESOLVED] TNFD replacement → official channel URL verified 200
 - [OPEN] ~~JPX Japanese-language records~~ [RESOLVED 2026-07-20] → include with "(Japanese)" marker (AC-E2)

@@ -53,7 +53,7 @@ Last updated: 2026-07-19
 
 ## Completion & Delivery Contract (MANDATORY — no agent may stop with work unfinished)
 
-An agent is FORBIDDEN from ending a turn/session while any started work is unfinished. A task is done only when it is **all eight**: implemented → CS-verified (`cs run`) → committed → pushed → PR with evidence → CI green → **merged to `main`** → **deployed to production** → **production E2E/smoke passed**. The completing agent merges its own PR (squash) and then verifies the production deploy and E2E.
+An agent is FORBIDDEN from ending a turn/session while any started work is unfinished. A task is done only when it is **all eight**: implemented → verified on a compute box → committed → pushed → PR with evidence → CI green → **merged to `main`** → **deployed to production** → **production E2E/smoke passed**. The completing agent merges its own PR (squash) and then verifies the production deploy and E2E.
 
 Prohibited stopping points: uncommitted/unpushed code; an open PR awaiting a human; implemented-but-unverified; CI-green-but-not-deployed; a TODO with in-progress items. Work that cannot be finished must not be started — decompose and start only completable units.
 

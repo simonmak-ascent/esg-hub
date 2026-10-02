@@ -22,7 +22,7 @@ Purpose: record of environment state before/after each change per spec `spec.md`
 | Security analysis (secret scanning/CodeQL) | 🔴 not configured; `security_and_analysis` empty | API |
 | gh CLI / git auth | 🔴 authenticated as `humanity4ai` → repo 404s | `gh auth status`; `git ls-remote` "Repository not found" |
 
-### Vercel (project `esg-hub`, team_WdRBvuyKYcVGwtSk1T9dIoaY)
+### Vercel (project `esg-hub`)
 
 | Item | State | Evidence |
 |------|-------|----------|
@@ -43,8 +43,8 @@ Purpose: record of environment state before/after each change per spec `spec.md`
 |------|-------|----------|
 | Health (namespace `esg_hub`) | 🟢 354 pages, 29 sections, no dup permalinks, no missing required fields, indexes on section/slug/related_pages/backlinks exist | `SURREAL_NAMESPACE=esg_hub node scripts/verify-db-schema.mjs` |
 | UNIQUE index on `page.permalink` | 🟡 missing — duplicates possible | verify:db recommendations |
-| Shell `SURREAL_NAMESPACE` | 🔴 `valuation` (foreign project) — scripts read env → target wrong DB; verify reported "0 pages" until overridden | direct run |
-| `verify-db-schema.mjs:13` | 🔴 hardcoded password fallback committed | file read |
+| Shell `SURREAL_NAMESPACE` | 🔴 a foreign project's namespace — scripts read env → target wrong DB; verify reported "0 pages" until overridden | direct run |
+| `verify-db-schema.mjs:13` | 🔴 credential fallback committed | file read |
 
 ### Local machine / repo
 
@@ -54,7 +54,7 @@ Purpose: record of environment state before/after each change per spec `spec.md`
 | Dead-domain references | 🔴 4 files: `src/app/robots.ts:12`, `src/app/videos/page.tsx:13,18`, `src/lib/constants.ts:7`, `mcp-server/README.md` | grep |
 | Prod API smoke `esg-hub.ascent.partners/api/v1` | 🟢 200 | curl |
 | Local E2E | 🟡 unsupported — machine too slow, Playwright times out | user statement |
-| `.vercel/project.json` | 🟢 linked (prj_7iHf6JTFeLxJXpTrx08Oiv8u6Wy0) | file read |
+| `.vercel/project.json` | 🟢 linked | file read |
 
 ### MCP servers (`~/.config/opencode/opencode.json`)
 
@@ -68,7 +68,7 @@ Purpose: record of environment state before/after each change per spec `spec.md`
 | gh_grep | 🟢 enabled | |
 | postgres | 🟢 enabled (DATABASE_URL set) | not yet exercised |
 | n8n | 🟢 enabled (N8N_API_KEY set) | not yet exercised |
-| humanity4ai | 🟢 enabled (`/mnt/c/git_repo/project_human` exists) | not yet exercised |
+| humanity4ai | 🟢 enabled (local sibling checkout exists) | not yet exercised |
 | clerk | 🟢 enabled | not yet exercised |
 | brave-search | 🟡 disabled; BRAVE_API_KEY set | enable per spec |
 | google-search | 🟡 disabled; GOOGLE_API_KEY + GOOGLE_SEARCH_ENGINE_ID set | enable per spec |
@@ -91,7 +91,7 @@ Purpose: record of environment state before/after each change per spec `spec.md`
 | F10 password fallback | removed from `verify-db-schema.mjs:13` | line now `\|\| ""` | 2026-07-19 |
 | F11 dead domain refs | fixed robots.ts, constants.ts, videos/page.tsx, mcp README | grep = 0 hits; live robots.txt → ascent.partners sitemap | 2026-07-19 |
 | F12 MCP config | opencode.json: github→`SIMONPLMAK_CLOUD_PAT`; brave-search/google-search **globally installed** (npx cold-start broke handshake); browserless + vercel remote configured | **github ✓** (simonplmak-cloud). **browserless ✓** (screenshot). **brave-search/google-search: servers load + tools execute ✓, but API keys rejected** — BRAVE_API_KEY → 422 SUBSCRIPTION_TOKEN_INVALID; GOOGLE_API_KEY → "API key not valid" (user must refresh both keys). vercel: `needs_auth` → `opencode mcp auth vercel` | 2026-07-20 |
-| F19 other MCP failures (discovered in startup logs) | n8n remote: `needs_auth` (N8N_API_KEY expired/invalid); playwright, postgres, humanity4ai: failed at session start (cold-start/env — playwright npx slowness, postgres needs local DB at localhost:5432, humanity4ai needs `/mnt/c/git_repo/project_human` running) | logged 2026-07-20; outside spec scope — user decides | 2026-07-20 |
+| F19 other MCP failures (discovered in startup logs) | n8n remote: `needs_auth`; playwright, postgres, humanity4ai: failed at session start (cold-start/env — playwright npx slowness, postgres needs local DB at localhost:5432, humanity4ai needs its local sibling checkout running) | logged 2026-07-20; outside spec scope — user decides | 2026-07-20 |
 | F13 no on-demand tests | `.github/workflows/test.yml` (workflow_dispatch) | run 29689564162: check+e2e success vs production | 2026-07-19 |
 | F14 zero automation | Dependabot (github-actions), vuln alerts (204), auto security fixes (on), PR template, PR-title lint, nightly health check, dedup-issue alerts; secret scanning → plan-blocked (422) → gitleaks job in test.yml | Dependabot PRs #4–6 opened same day; nightly dispatch green (29693468529); issue #8 auto-created on failure | 2026-07-19 |
 | F15 Vercel env vars missing `preview` target (all 6 keys) — preview deploys had no DB creds; E2E "Page Not Found" test failed on DB-error page | added `preview` target to the production entry of each key | env GET: all keys = [development, preview, production]; preview E2E then passed | 2026-07-19 |
@@ -114,11 +114,11 @@ Purpose: record of environment state before/after each change per spec `spec.md`
 
 | Item | State | Evidence |
 |------|-------|----------|
-| gitleaks full-history scan (133 commits) | 🟡 1 finding | `src/app/api/ai-search/route.ts:24` — live GCP API key committed as fallback (prod had no Vercel env var, so the fallback was in active use) |
-| GCP key fallback in code | ✅ removed | `|| ""`; interim value added to Vercel env (all 3 targets) so prod keeps working until user rotates the key in GCP Console |
-| `GOOGLE_CSE_ID` fallback | ✅ removed | same change; also added to Vercel env |
-| SurrealDB root password rotation | ✅ rotated + verified | `DEFINE USER OVERWRITE root ON ROOT PASSWORD … ROLES OWNER`; new password queried OK (354 pages), old rejected (401). Updated: Vercel env ×2 entries, GitHub secret, `~/.bashrc` |
-| Deploy with rotated creds | ✅ green | run 29711734065 success; prod /en + /api/v1 → 200 |
+| gitleaks full-history scan | 🟡 1 finding | a provider API key had been committed as a code fallback in an API route (removed from HEAD) |
+| Provider key fallback in code | ✅ removed | fallback replaced with an empty default; the value was moved to the platform env so production kept working until rotation |
+| Related fallback ID | ✅ removed | removed in the same change |
+| Database root credential rotation | ✅ rotated + verified | rotated; the new credential queried OK (354 pages) and the old was rejected (401). Updated: platform env, GitHub secret, shell env |
+| Deploy with rotated creds | ✅ green | production /en + /api/v1 → 200 |
 
 **Repo-public gate:** ~~BLOCKED~~ **REPO IS PUBLIC as of 2026-07-20** ✅
 
@@ -126,8 +126,8 @@ Purpose: record of environment state before/after each change per spec `spec.md`
 
 | Step | Result |
 |------|--------|
-| Pre-publication sweeps | gitleaks history scan (1 GCP key found + removed from HEAD); SurrealDB password rotated everywhere first |
-| Exposed GCP API key | ✅ deleted by user in GCP Console; verified "API Key not found" (was "forbidden" before) |
+| Pre-publication sweeps | gitleaks history scan (1 finding, removed from HEAD); database credential rotated everywhere first |
+| Exposed provider key | ✅ deleted in the provider console; verified invalid |
 | Visibility flip | `PATCH private:false` → `"visibility":"public"` |
 | Secret scanning + push protection | ✅ enabled (free on public) — **AC-D4 fully satisfied natively**, gitleaks CI job now redundant-but-harmless |
 | Dependabot | security updates enabled; alerts API 204; 0 open vulnerability alerts |
@@ -136,7 +136,7 @@ Purpose: record of environment state before/after each change per spec `spec.md`
 | Footer GitHub link | ✅ 200 (was anonymous-404 — lychee false-positive eliminated) |
 | Prod | /en + /api/v1 → 200 after all changes |
 
-Exposed-credential postures after publication: SurrealDB password — rotated before exposure (history value invalid). GCP key — deleted before exposure (history value invalid). **No live credentials exist in the repo history.**
+Exposed-credential postures after publication: any exposed values were rotated or deleted before publication. **No live credentials exist in the repo history.**
 
 ## Brave Search replacement + AI search repair (2026-07-20)
 
@@ -144,8 +144,8 @@ Exposed-credential postures after publication: SurrealDB password — rotated be
 |------|-------|----------|
 | Google CSE → Brave Search (site AI search) | ✅ replaced + verified live | `braveSearch()` in `ai-search/route.ts` scoped to 12 authoritative ESG domains (from the `external_resource` corpus + standard-setters) via `site:` operators; `BRAVE_API_KEY` in Vercel env (all targets); deep-mode query returns scoped results (globalreporting.org, ifrs.org) |
 | google-search MCP | ✅ disabled | brave-search MCP covers the same need (key verified working, added to `~/.bashrc`) |
-| GCP key rotation | ➡️ simplified | Google CSE no longer used anywhere — user just **deletes** the exposed key in GCP Console (no replacement needed), clearing the go-public gate |
-| AI search generation broken (pre-existing) | ✅ fixed | stale `DEEPSEEK_API_KEY` in Vercel env; upserted the locally-verified key ×3 targets; prod streams full answers (439–496 chunks, no error events) |
+| Exposed key rotation | ➡️ simplified | the search provider was replaced, so no key replacement is needed — the exposed key was simply deleted in the provider console, clearing the go-public gate |
+| AI search generation broken (pre-existing) | ✅ fixed | stale AI-provider key in the platform env; upserted the locally-verified value ×3 targets; prod streams full answers (439–496 chunks, no error events) |
 
 ## Optional items completion (2026-07-20)
 
@@ -188,7 +188,7 @@ Startup log after final restart: **zero `server unavailable` warnings** (2026-07
 1. **Enable Copilot** on simonplmak-cloud — ✅ DONE 2026-07-20: reviewer request for `copilot-pull-request-reviewer[bot]` now accepted on PR #4 (previously no-op'd). Ruleset `copilot_code_review` active → auto-requests on future PRs; review text generation is async (pending on PR #4 at log time; AC-C1 auto-fire to be confirmed on next PR)
 2. **Vercel MCP OAuth** — ✅ DONE 2026-07-20: tokens stored in `~/.local/share/opencode/mcp-auth.json`; vercel MCP tools load on next opencode restart (AC-15 verification = one MCP call listing deployments)
 3. **Refresh rejected API keys** in `~/.bashrc`: `BRAVE_API_KEY` (422 invalid) and `GOOGLE_API_KEY` (invalid) — search MCP servers themselves verified working. github + browserless verified ✓. (Optional: fix n8n/postgres/playwright/humanity4ai MCPs — see F19.)
-3. **Rotate SurrealDB password** — committed fallback removed, but git history still contains it (until rotation, treat as exposed)
+3. **Database credential rotation** — completed before publication (see publication record)
 4. **Fix dead YouTube links** (@EFRAG, @TNFD_ → 404 even with browser UA) in DB content — tracked in issue #8
 5. Review/merge Dependabot PRs #4–6 (action version bumps)
 6. Decide: commit or gitignore `mcp-server/package-lock.json`
