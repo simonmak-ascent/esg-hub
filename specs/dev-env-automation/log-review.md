@@ -61,7 +61,7 @@ Purpose: record of environment state before/after each change per spec `spec.md`
 | Server | State | Note |
 |--------|-------|------|
 | context7 | 🟢 enabled | |
-| github | 🔴 enabled but token = `humanity4ai` (GH_TOKEN) → no esg-hub access | rewire to `SIMONPLMAK_CLOUD_PAT` |
+| github | 🔴 enabled but token = `humanity4ai` (GH_TOKEN) → no esg-hub access | rewire to `SIMONMAK_ASCENT_PAT` |
 | playwright | 🟢 enabled | |
 | perplexity | 🟢 enabled, verified live (search returned results 2026-07-19) | |
 | esg-hub (local) | 🟢 enabled, verified live (354 pages via prod API) | code default URL correct; README wrong (F11) |
@@ -85,12 +85,12 @@ Purpose: record of environment state before/after each change per spec `spec.md`
 | F3 node 24.x | PATCH `nodeVersion: 22.x` | project GET read-back | 2026-07-19 |
 | F4 preview SSO protection | PATCH `ssoProtection: null` | read-back + PR #2 preview E2E green unauthenticated (run 29689025247) | 2026-07-19 |
 | F5 no branch protection | _pending Phase 2 (T-15 ruleset)_ | | |
-| F7 wrong-account auth | PAT → `~/.bashrc` (`SIMONPLMAK_CLOUD_PAT`, `GH_TOKEN` aliased); gh hosts.yml active=simonplmak-cloud; repo-local `credential.username` | AC-A1: `gh api user` → simonplmak-cloud, repo API 200, `git ls-remote` ✓ | 2026-07-19 |
+| F7 wrong-account auth | PAT → `~/.bashrc` (`SIMONMAK_ASCENT_PAT`, `GH_TOKEN` aliased); gh hosts.yml active=simonmak-ascent; repo-local `credential.username` | AC-A1: `gh api user` → simonmak-ascent, repo API 200, `git ls-remote` ✓ | 2026-07-19 |
 | F8 namespace shadowing | `scripts/lib/db-env.mjs` (hardcodes esg_hub; `ESG_HUB_NS_OVERRIDE` warns); 14 scripts migrated; syntax-checked | `SURREAL_NAMESPACE=valuation` → verify reports 354 pages; override → warns + targets override | 2026-07-19 |
 | F9 unique permalink index | already existed (`idx_page_permalink`); removed redundant duplicate `unique_permalink`; **verify-db detection bug fixed** (INFO FOR TABLE returns SurrealQL strings, not objects) | `pnpm verify:db` zero warnings, 354 pages | 2026-07-19 |
 | F10 password fallback | removed from `verify-db-schema.mjs:13` | line now `\|\| ""` | 2026-07-19 |
 | F11 dead domain refs | fixed robots.ts, constants.ts, videos/page.tsx, mcp README | grep = 0 hits; live robots.txt → ascent.partners sitemap | 2026-07-19 |
-| F12 MCP config | opencode.json: github→`SIMONPLMAK_CLOUD_PAT`; brave-search/google-search **globally installed** (npx cold-start broke handshake); browserless + vercel remote configured | **github ✓** (simonplmak-cloud). **browserless ✓** (screenshot). **brave-search/google-search: servers load + tools execute ✓, but API keys rejected** — BRAVE_API_KEY → 422 SUBSCRIPTION_TOKEN_INVALID; GOOGLE_API_KEY → "API key not valid" (user must refresh both keys). vercel: `needs_auth` → `opencode mcp auth vercel` | 2026-07-20 |
+| F12 MCP config | opencode.json: github→`SIMONMAK_ASCENT_PAT`; brave-search/google-search **globally installed** (npx cold-start broke handshake); browserless + vercel remote configured | **github ✓** (simonmak-ascent). **browserless ✓** (screenshot). **brave-search/google-search: servers load + tools execute ✓, but API keys rejected** — BRAVE_API_KEY → 422 SUBSCRIPTION_TOKEN_INVALID; GOOGLE_API_KEY → "API key not valid" (user must refresh both keys). vercel: `needs_auth` → `opencode mcp auth vercel` | 2026-07-20 |
 | F19 other MCP failures (discovered in startup logs) | n8n remote: `needs_auth`; playwright, postgres, humanity4ai: failed at session start (cold-start/env — playwright npx slowness, postgres needs local DB at localhost:5432, humanity4ai needs its local sibling checkout running) | logged 2026-07-20; outside spec scope — user decides | 2026-07-20 |
 | F13 no on-demand tests | `.github/workflows/test.yml` (workflow_dispatch) | run 29689564162: check+e2e success vs production | 2026-07-19 |
 | F14 zero automation | Dependabot (github-actions), vuln alerts (204), auto security fixes (on), PR template, PR-title lint, nightly health check, dedup-issue alerts; secret scanning → plan-blocked (422) → gitleaks job in test.yml | Dependabot PRs #4–6 opened same day; nightly dispatch green (29693468529); issue #8 auto-created on failure | 2026-07-19 |
@@ -165,7 +165,7 @@ Exposed-credential postures after publication: any exposed values were rotated o
 
 | Server | State | Verification |
 |--------|-------|--------------|
-| github | ✅ | get_me → simonplmak-cloud |
+| github | ✅ | get_me → simonmak-ascent |
 | browserless | ✅ | screenshot of prod via MCP |
 | brave-search | ✅ | live query returns results (new key) |
 | perplexity | ✅ | live query returns results (global binary) |
@@ -185,7 +185,7 @@ Startup log after final restart: **zero `server unavailable` warnings** (2026-07
 | MCP restart verification | pending next opencode restart (all binaries smoke-tested manually) |
 | Deploys post-merge | ✅ 3/3 production deploys green after Dependabot merges |
 
-1. **Enable Copilot** on simonplmak-cloud — ✅ DONE 2026-07-20: reviewer request for `copilot-pull-request-reviewer[bot]` now accepted on PR #4 (previously no-op'd). Ruleset `copilot_code_review` active → auto-requests on future PRs; review text generation is async (pending on PR #4 at log time; AC-C1 auto-fire to be confirmed on next PR)
+1. **Enable Copilot** on simonmak-ascent — ✅ DONE 2026-07-20: reviewer request for `copilot-pull-request-reviewer[bot]` now accepted on PR #4 (previously no-op'd). Ruleset `copilot_code_review` active → auto-requests on future PRs; review text generation is async (pending on PR #4 at log time; AC-C1 auto-fire to be confirmed on next PR)
 2. **Vercel MCP OAuth** — ✅ DONE 2026-07-20: tokens stored in `~/.local/share/opencode/mcp-auth.json`; vercel MCP tools load on next opencode restart (AC-15 verification = one MCP call listing deployments)
 3. **Refresh rejected API keys** in `~/.bashrc`: `BRAVE_API_KEY` (422 invalid) and `GOOGLE_API_KEY` (invalid) — search MCP servers themselves verified working. github + browserless verified ✓. (Optional: fix n8n/postgres/playwright/humanity4ai MCPs — see F19.)
 3. **Database credential rotation** — completed before publication (see publication record)

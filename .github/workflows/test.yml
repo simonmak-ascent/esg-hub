@@ -25,7 +25,7 @@ jobs:
       - name: Checkout tool_packages
         uses: actions/checkout@v7
         with:
-          repository: simonplmak-cloud/tool_packages
+          repository: simonmak-ascent/tool_packages
           path: tool_packages_repo
           ref: master
           token: ${{ secrets.TOOL_PACKAGES_PAT }}
@@ -65,7 +65,7 @@ jobs:
       - name: Checkout tool_packages
         uses: actions/checkout@v7
         with:
-          repository: simonplmak-cloud/tool_packages
+          repository: simonmak-ascent/tool_packages
           path: tool_packages_repo
           ref: master
           token: ${{ secrets.TOOL_PACKAGES_PAT }}

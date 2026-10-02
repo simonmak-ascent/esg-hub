@@ -1,12 +1,12 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.simonplmak-cloud/esg-hub",
+  "name": "io.github.simonmak-ascent/esg-hub",
   "title": "ESG Hub MCP Server",
   "description": "ESG knowledge base for AI agents: hybrid search, glossary, frameworks, industries, graph traversal.",
   "version": "1.4.0",
   "websiteUrl": "https://esg-hub.ascent.partners",
   "repository": {
-    "url": "https://github.com/simonplmak-cloud/esg-hub",
+    "url": "https://github.com/simonmak-ascent/esg-hub",
     "source": "github"
   },
   "remotes": [
@@ -27,7 +27,7 @@
   ],
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/simonplmak-cloud/esg-hub/main/public/icon-512.png",
+      "src": "https://raw.githubusercontent.com/simonmak-ascent/esg-hub/main/public/icon-512.png",
       "mimeType": "image/png",
       "sizes": ["512x512"]
     }

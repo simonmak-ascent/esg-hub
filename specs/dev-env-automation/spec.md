@@ -21,7 +21,7 @@ Full details in `log-review.md`. Summary:
 | F4 | `ssoProtection: all_except_custom_domains` — preview URLs will fail E2E unauthenticated | Vercel project API; VERCEL_PROTECTION_FIX.md |
 | F5 | No branch protection on `main` | Branch protection API 404 |
 | F6 | Repo secrets complete (9/9 expected) | `gh secret list` |
-| F7 | gh/git/github-MCP authenticate as `humanity4ai` — no access to `simonplmak-cloud/esg-hub` (404s) | gh auth status; API 404s |
+| F7 | gh/git/github-MCP authenticate as `humanity4ai` — no access to `simonmak-ascent/esg-hub` (404s) | gh auth status; API 404s |
 | F8 | Shell `SURREAL_NAMESPACE=valuation` — `scripts/*.mjs` target the wrong DB (verify reported "0 pages") | verify-db-schema.mjs with/without override |
 | F9 | DB healthy except: no UNIQUE index on `page.permalink` | verify:db (correct ns): 354 pages, indexes ok |
 | F10 | `verify-db-schema.mjs:13` committed password fallback | file read |
@@ -32,7 +32,7 @@ Full details in `log-review.md`. Summary:
 
 ## User Stories
 
-- As a **developer**, I want git, gh CLI, and the github MCP to authenticate as `simonplmak-cloud` so that I can push, inspect runs, and manage the repo from this machine.
+- As a **developer**, I want git, gh CLI, and the github MCP to authenticate as `simonmak-ascent` so that I can push, inspect runs, and manage the repo from this machine.
 - As a **developer**, I want to trigger the full test suite on GitHub on demand so that I never run tests on this slow local machine.
 - As a **maintainer**, I want production deploys green again, `main` protected, dependency/security PRs arriving automatically, a nightly job watching prod + DB, and failures reaching me via n8n.
 - As a **reviewer**, I want every PR to automatically receive a Copilot review before I look at it.
@@ -65,8 +65,8 @@ Full details in `log-review.md`. Summary:
 
 ### WS-A: Foundation & Alignment (Phase 1)
 
-- **AC-A1 [MUST]** Given the simonplmak-cloud PAT stored as a shell env var, when `gh api repos/simonplmak-cloud/esg-hub`, `gh run list`, and `git ls-remote origin` run, then all succeed (HTTP 200 / ref listing). And `gh api user` in the configured context reports login `simonplmak-cloud` (no silent fallback to `humanity4ai`).
-- **AC-A2 [MUST]** Given the github MCP configured with the simonplmak-cloud credential, when an MCP repo-read is invoked for `simonplmak-cloud/esg-hub`, then repository data returns (not 404).
+- **AC-A1 [MUST]** Given the simonmak-ascent PAT stored as a shell env var, when `gh api repos/simonmak-ascent/esg-hub`, `gh run list`, and `git ls-remote origin` run, then all succeed (HTTP 200 / ref listing). And `gh api user` in the configured context reports login `simonmak-ascent` (no silent fallback to `humanity4ai`).
+- **AC-A2 [MUST]** Given the github MCP configured with the simonmak-ascent credential, when an MCP repo-read is invoked for `simonmak-ascent/esg-hub`, then repository data returns (not 404).
 - **AC-A3 [MUST]** Given `VERCEL_TOKEN` as a shell env var, when the deployments API is queried, then the deployment list returns.
 - **AC-A4 [MUST]** Given a push to `main`, when the deploy workflow completes, then the Vercel production deployment reaches `READY`, the workflow conclusion is `success`, and `https://esg-hub.ascent.partners/en` serves the new build. (Mechanism deferred to plan.md; recommendation: prebuilt-in-CI mirroring deploy-preview.yml. This spec's approval covers the ci-cd-process "ask first" clause; a task amends that spec via `/sdd:amend`.)
 - **AC-A5 [MUST]** Given the deployment is READY, when E2E runs against it, then failures still block the pipeline (preserves ci-cd-process AC-4).
@@ -82,7 +82,7 @@ Full details in `log-review.md`. Summary:
 ### WS-B: On-Demand Testing (Phase 1)
 
 - **AC-B1 [MUST]** Given no PR or push, when a maintainer manually triggers the test workflow (`workflow_dispatch`), then lint → typecheck → unit tests run on GitHub runners and report conclusion; and E2E runs against a URL input defaulting to production.
-- **AC-B2 [SHOULD]** `AGENTS.md` states local E2E is unsupported on this machine, points to the manual workflow, and documents the new env vars (`SIMONPLMAK_CLOUD_PAT`, `VERCEL_TOKEN`).
+- **AC-B2 [SHOULD]** `AGENTS.md` states local E2E is unsupported on this machine, points to the manual workflow, and documents the new env vars (`SIMONMAK_ASCENT_PAT`, `VERCEL_TOKEN`).
 
 ### WS-C: Automated Code Review (Phase 2)
 
@@ -127,16 +127,16 @@ Full details in `log-review.md`. Summary:
 - Release/changelog automation; GitHub Apps beyond Copilot; Advanced Security purchase
 - OAuth setup for google-workspace / ms-365 MCPs (remain disabled)
 - SurrealDB password rotation (manual follow-up after AC-A11)
-- Vendoring/publishing `@simonplmak-cloud/*` packages (revisit only if the deploy fix proves fragile)
+- Vendoring/publishing `@simonmak-ascent/*` packages (revisit only if the deploy fix proves fragile)
 - `vercel.json` no-op rewrite cleanup; DNS/domain changes
 - Node version policy beyond Vercel pinning (engines vs `.nvmrc` vs CI mismatch documented, not changed)
 
 ## Open Questions
 
-- [RESOLVED] GitHub credential → user-provided PAT (verified: login `simonplmak-cloud`, scopes `repo`, `workflow`)
+- [RESOLVED] GitHub credential → user-provided PAT (verified: login `simonmak-ascent`, scopes `repo`, `workflow`)
 - [RESOLVED] Vercel access → user-provided token (verified) + add Vercel MCP
 - [RESOLVED] Disabled MCPs → enable brave-search/google-search, repair browserless
 - [RESOLVED] DB index + namespace fixes → in scope (single spec)
 - [RESOLVED] Extension: single spec `dev-env-automation`; Copilot review; Dependabot tolerate-errors; n8n webhook notifications
 - [OPEN] n8n webhook URL — user provides at implementation time
-- [OPEN] Copilot subscription active on simonplmak-cloud? — verified at implementation (AC-CE1 fallback if absent)
+- [OPEN] Copilot subscription active on simonmak-ascent? — verified at implementation (AC-CE1 fallback if absent)

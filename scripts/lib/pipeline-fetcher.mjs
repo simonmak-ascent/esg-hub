@@ -99,7 +99,7 @@ async function readBody(res, signal) {
  */
 export async function fetchSource(url, options = {}) {
   const requestHeaders = {
-    "User-Agent": "ESG-Hub-KM/1.0 (https://github.com/simonplmak-cloud/esg-hub)",
+    "User-Agent": "ESG-Hub-KM/1.0 (https://github.com/simonmak-ascent/esg-hub)",
     Accept: "text/html, application/json, text/*, */*;q=0.8",
   };
   if (options.etag) {

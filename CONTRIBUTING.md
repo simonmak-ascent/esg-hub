@@ -3,7 +3,7 @@
 ## Setup
 
 ```bash
-git clone https://github.com/simonplmak-cloud/esg-hub.git
+git clone https://github.com/simonmak-ascent/esg-hub.git
 cd esg-hub
 pnpm install
 ```

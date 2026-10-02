@@ -10,7 +10,7 @@ deploy:
   needs: check
   steps:
     # 1. Checkout (esg-hub) — unchanged
-    # 2. Checkout tool_packages (simonplmak-cloud/tool_packages, ref master, TOOL_PACKAGES_PAT) + symlink to ../tool_package — unchanged
+    # 2. Checkout tool_packages (simonmak-ascent/tool_packages, ref master, TOOL_PACKAGES_PAT) + symlink to ../tool_package — unchanged
     # 3. pnpm/action-setup@v4, actions/setup-node@v4 (node 20, cache pnpm) — unchanged
     # 4. pnpm install --frozen-lockfile
     # 5. Install Vercel CLI: pnpm add -g vercel@latest

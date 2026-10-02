@@ -255,7 +255,7 @@ export default async function McpDocs() {
             <p style={{ fontSize: "0.92rem", color: "var(--color-text-secondary)", lineHeight: 1.55 }}>
               {t("sourceCodeDesc")}{" "}
               <a
-                href="https://github.com/simonplmak-cloud/esg-hub/tree/main/mcp-server"
+                href="https://github.com/simonmak-ascent/esg-hub/tree/main/mcp-server"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: "var(--color-link)" }}

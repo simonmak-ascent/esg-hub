@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_AUTH_TOKEN: ${{ secrets.SIMONPLMAK_CLOUD_PAT }}
+  NODE_AUTH_TOKEN: ${{ secrets.SIMONMAK_ASCENT_PAT }}
 
 jobs:
   validate:
@@ -33,7 +33,7 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
           registry-url: https://npm.pkg.github.com
-          scope: '@simonplmak-cloud'
+          scope: '@simonmak-ascent'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -84,7 +84,7 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
           registry-url: https://npm.pkg.github.com
-          scope: '@simonplmak-cloud'
+          scope: '@simonmak-ascent'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

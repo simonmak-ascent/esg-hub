@@ -15,7 +15,7 @@ Review every error surfaced by the Nightly Health Check workflow since its creat
 | Original finding | Current state |
 |------------------|---------------|
 | Dead YouTube channels (@EFRAG, @TNFD_ 404) | ✅ fixed via `specs/video-catalogue-integration` (official channel URLs verified 200) |
-| `github.com/simonplmak-cloud/esg-hub` 404 (anonymous) ×2 | ✅ fixed by repo going public (200) |
+| `github.com/simonmak-ascent/esg-hub` 404 (anonymous) ×2 | ✅ fixed by repo going public (200) |
 | `unccelearn.org/course/view.php?id=139` (connection reset / 403) | ✅ course confirmed alive (Brave Search result: exact URL, full description); 403 is bot-blocking — correctly in accept-list, no action |
 | manuscdn session-file PDFs (403) | ✅ no longer present in any `page` content (DB query: zero rows) |
 

@@ -1,9 +1,9 @@
 {
   "$schema": "https://glama.ai/mcp/schemas/server.json",
-  "maintainers": ["simonplmak-cloud"],
+  "maintainers": ["simonmak-ascent"],
   "name": "esg-hub",
   "description": "ESG knowledge base for AI agents — hybrid search, glossary terms, reporting frameworks, industry taxonomy, and knowledge-graph traversal over the ESG Hub.",
-  "repository": "https://github.com/simonplmak-cloud/esg-hub",
+  "repository": "https://github.com/simonmak-ascent/esg-hub",
   "license": "MIT",
   "runtime": "node",
   "installInstructions": {

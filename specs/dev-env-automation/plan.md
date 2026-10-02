@@ -27,15 +27,15 @@ Replace the API-trigger (`POST /v13/deployments` + gitSource + poll loop) with `
 
 ### D2 — GitHub identity (AC-A1, AC-A2)
 
-- Append `SIMONPLMAK_CLOUD_PAT` to `~/.bashrc` (shell-level, consistent with existing secret hygiene).
-- `gh auth login --with-token` adds `simonplmak-cloud` as a second gh account; `gh auth switch --user simonplmak-cloud` makes it active (work repos live there); `gh auth setup-git` replaces `credential.helper=store` with `!gh auth git-credential` so git push uses the active account.
-- `opencode.json`: github MCP `GITHUB_PERSONAL_ACCESS_TOKEN` → `{env:SIMONPLMAK_CLOUD_PAT}`.
+- Append `SIMONMAK_ASCENT_PAT` to `~/.bashrc` (shell-level, consistent with existing secret hygiene).
+- `gh auth login --with-token` adds `simonmak-ascent` as a second gh account; `gh auth switch --user simonmak-ascent` makes it active (work repos live there); `gh auth setup-git` replaces `credential.helper=store` with `!gh auth git-credential` so git push uses the active account.
+- `opencode.json`: github MCP `GITHUB_PERSONAL_ACCESS_TOKEN` → `{env:SIMONMAK_ASCENT_PAT}`.
 - **Trade-off:** gh's active account is host-global; pushing to humanity4ai-owned repos later requires `gh auth switch` (documented in AGENTS.md update, AC-B2).
 - **Verification:** `gh api user` login, `gh api repos/...` 200, `git ls-remote origin` (AC-A1), MCP repo read (AC-A2).
 
 ### D3 — Branch protection + Copilot auto-review via one ruleset (AC-A13; AC-C1, AC-C2, AC-CE1)
 
-Single repository ruleset `main-protection` via `POST /repos/simonplmak-cloud/esg-hub/rulesets`:
+Single repository ruleset `main-protection` via `POST /repos/simonmak-ascent/esg-hub/rulesets`:
 
 ```json
 {
@@ -110,7 +110,7 @@ Non-blocking by construction (AC-GE1). Secret `N8N_WEBHOOK_URL` added via `gh se
 
 - `src/app/robots.ts:12`, `src/lib/constants.ts:7`, `src/app/videos/page.tsx:13,18` → `https://esg-hub.ascent.partners`; `mcp-server/README.md` default URL corrected. Verify: repo-wide grep = 0 hits (excluding `specs/`, `VERCEL_PROTECTION_FIX.md`, `AGENTS.md` history notes).
 - Remove the password fallback at `scripts/verify-db-schema.mjs:13` → empty-string default (fails fast with a clear message via D5 helper).
-- `AGENTS.md`: add "local E2E unsupported on this machine — use `test.yml` on GitHub" + env var rows (`SIMONPLMAK_CLOUD_PAT`, `VERCEL_TOKEN`) + gh account-switch note.
+- `AGENTS.md`: add "local E2E unsupported on this machine — use `test.yml` on GitHub" + env var rows (`SIMONMAK_ASCENT_PAT`, `VERCEL_TOKEN`) + gh account-switch note.
 
 ## Traceability (AC → component)
 

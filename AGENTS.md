@@ -29,7 +29,7 @@ CI gate order (`.github/workflows/deploy.yml` check job): lint → tsc → vites
 
 ### Local install prerequisite
 
-`package.json` has `file:../tool_package/packages/{utils,validation}` deps — `pnpm install` fails unless the sibling repo `simonplmak-cloud/tool_packages` exists at `../tool_package` (repo name plural, local path singular). CI checks it out and symlinks it.
+`package.json` has `file:../tool_package/packages/{utils,validation}` deps — `pnpm install` fails unless the sibling repo `simonmak-ascent/tool_packages` exists at `../tool_package` (repo name plural, local path singular). CI checks it out and symlinks it.
 
 ### Playwright ports
 
@@ -82,12 +82,12 @@ Secrets are shell-level (`~/.bashrc`), never in repo files. **Never read `.env*`
 | `BRAVE_API_KEY` | Web search for the AI search feature (`src/app/api/ai-search/route.ts`) |
 | `PERPLEXITY_API_KEY` | Claim verification in the KM R&D loop (`km-rd-loop.yml`) |
 | `ESG_HUB_WRITE_TOKEN` | Bearer token for MCP write tools + pipeline REST API calls to `POST /api/v1/terms` and `PATCH /api/v1/pages/:id/facets` |
-| `SIMONPLMAK_CLOUD_PAT` | GitHub PAT for the `simonplmak-cloud` account (owns this repo); `GH_TOKEN` aliases it |
+| `SIMONMAK_ASCENT_PAT` | GitHub PAT for the `simonmak-ascent` account (owns this repo); `GH_TOKEN` aliases it |
 | `VERCEL_TOKEN` | Vercel API token for deployment/log inspection |
 
 ### GitHub identity
 
-This repo belongs to the `simonplmak-cloud` account. gh CLI and git authenticate as `simonplmak-cloud` (PAT in `SIMONPLMAK_CLOUD_PAT`/`GH_TOKEN`; git via repo-local `credential.username` + `~/.git-credentials`). The `humanity4ai` account is secondary — if a command 404s on `simonplmak-cloud/*`, check which token is in use.
+This repo belongs to the `simonmak-ascent` account. gh CLI and git authenticate as `simonmak-ascent` (PAT in `SIMONMAK_ASCENT_PAT`/`GH_TOKEN`; git via repo-local `credential.username` + `~/.git-credentials`). The `humanity4ai` account is secondary — if a command 404s on `simonmak-ascent/*`, check which token is in use.
 
 ## Conventions
 

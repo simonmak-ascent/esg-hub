@@ -1,7 +1,7 @@
 blank_issues_enabled: false
 contact_links:
   - name: Security vulnerability
-    url: https://github.com/simonplmak-cloud/esg-hub/security/advisories/new
+    url: https://github.com/simonmak-ascent/esg-hub/security/advisories/new
     about: Report security issues privately — never in a public issue.
   - name: ESG Hub live site
     url: https://esg-hub.ascent.partners

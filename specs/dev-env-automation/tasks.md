@@ -15,8 +15,8 @@ Repo-change tasks are batched into one PR per phase (PR-1, PR-2, PR-3) — merge
 
 | # | Task | Size | Verify |
 |---|------|------|--------|
-| T-01 | Append `SIMONPLMAK_CLOUD_PAT` + `VERCEL_TOKEN` exports to `~/.bashrc` | S | new shell: `printenv` both set |
-| T-02 | gh: `gh auth login --with-token`, `gh auth switch --user simonplmak-cloud`, `gh auth setup-git` | S | **AC-A1**: `gh api user` login = simonplmak-cloud; `gh api repos/simonplmak-cloud/esg-hub` 200; `git ls-remote origin` lists refs |
+| T-01 | Append `SIMONMAK_ASCENT_PAT` + `VERCEL_TOKEN` exports to `~/.bashrc` | S | new shell: `printenv` both set |
+| T-02 | gh: `gh auth login --with-token`, `gh auth switch --user simonmak-ascent`, `gh auth setup-git` | S | **AC-A1**: `gh api user` login = simonmak-ascent; `gh api repos/simonmak-ascent/esg-hub` 200; `git ls-remote origin` lists refs |
 | T-03 [P] | Vercel: PATCH `nodeVersion: "22.x"` (project esg-hub, teamId from `.vercel/project.json`) | S | **AC-A6**: GET shows `22.x`; log before/after |
 | T-04 [P] | Vercel: PATCH `ssoProtection` off for previews (payload per contracts/github-settings.md §5; dashboard fallback R5) | M | **AC-A7**: GET read-back logged; full proof = next preview URL returns 200 unauthenticated (noted as pending) |
 | T-05 [P] | Rewrite `deploy` job in `.github/workflows/deploy.yml` per `contracts/deploy-workflow.md` | M | YAML parses; contract review; end-to-end proof at PR-1 merge (**AC-A4**, **AC-A5**) |
@@ -25,8 +25,8 @@ Repo-change tasks are batched into one PR per phase (PR-1, PR-2, PR-3) — merge
 | T-08 | New `scripts/lib/db-env.mjs` (D5) + migrate all `scripts/*.mjs` reading `SURREAL_NAMESPACE` to it | M | **AC-A9**: `SURREAL_NAMESPACE=valuation node scripts/verify-db-schema.mjs` → reports esg_hub stats (354 pages); override path prints warning |
 | T-09 | New `scripts/add-unique-permalink-index.mjs`; run it (DB mutation — confirm before run per Boundaries) | S | **AC-A10**: `INFO FOR TABLE page` shows `unique_permalink`; `pnpm verify:db` zero warnings |
 | T-10 | New `.github/workflows/test.yml` per `contracts/automation-workflows.md` §1 | M | after PR-1 merge: `gh workflow run` → run green (**AC-B1**) |
-| T-11 | `AGENTS.md`: GitHub-as-test-runner note, env var rows (`SIMONPLMAK_CLOUD_PAT`, `VERCEL_TOKEN`), `gh auth switch` note | S | **AC-B2**: content present |
-| T-12 [P] | `opencode.json` (backup first): github MCP → `{env:SIMONPLMAK_CLOUD_PAT}`; enable brave-search, google-search; add vercel remote MCP per `contracts/opencode-mcp.md` | M | **AC-A2**: MCP repo read returns data; **AC-14**: live query per search MCP; **AC-15**: OAuth attempt or CLI-fallback verdict |
+| T-11 | `AGENTS.md`: GitHub-as-test-runner note, env var rows (`SIMONMAK_ASCENT_PAT`, `VERCEL_TOKEN`), `gh auth switch` note | S | **AC-B2**: content present |
+| T-12 [P] | `opencode.json` (backup first): github MCP → `{env:SIMONMAK_ASCENT_PAT}`; enable brave-search, google-search; add vercel remote MCP per `contracts/opencode-mcp.md` | M | **AC-A2**: MCP repo read returns data; **AC-14**: live query per search MCP; **AC-15**: OAuth attempt or CLI-fallback verdict |
 | T-13 [P] | browserless: inspect (`docker ps -a`), start/repair service, verify `curl localhost:3000`, then enable MCP | S | live MCP call, or R7 verdict logged |
 | T-14 | `/sdd:amend` `specs/ci-cd-process` — replace API-trigger mechanism with prebuilt-in-CI; supersede `contracts/vercel-api.md`; bump version | S | spec diff reviewed |
 

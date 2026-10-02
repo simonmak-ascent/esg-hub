@@ -1,6 +1,6 @@
 # ESG Hub — Open-Access ESG Encyclopedia
 
-[![Deploy to Vercel](https://github.com/simonplmak-cloud/esg-hub/actions/workflows/deploy.yml/badge.svg)](https://github.com/simonplmak-cloud/esg-hub/actions/workflows/deploy.yml)
+[![Deploy to Vercel](https://github.com/simonmak-ascent/esg-hub/actions/workflows/deploy.yml/badge.svg)](https://github.com/simonmak-ascent/esg-hub/actions/workflows/deploy.yml)
 [![License: MIT (code)](https://img.shields.io/badge/code-MIT-yellow.svg)](LICENSE)
 [![Content: CC BY-SA 4.0](https://img.shields.io/badge/content-CC%20BY--SA%204.0-blue.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
 
@@ -24,7 +24,7 @@ Next.js 15 (App Router, React 19) · SurrealDB Cloud · Tailwind CSS v4 · next-
 ## Quick Start
 
 ```bash
-git clone https://github.com/simonplmak-cloud/esg-hub.git
+git clone https://github.com/simonmak-ascent/esg-hub.git
 cd esg-hub
 pnpm install        # note: requires sibling repo ../tool_package (private)
 cp .env.example .env  # fill in your own values
@@ -42,16 +42,16 @@ Useful commands: `pnpm lint` · `npx tsc --noEmit` · `npx vitest run` · `pnpm 
 
 ## Contributing
 
-- **Content errors** (wrong/outdated info, dead links): open a [content error issue](https://github.com/simonplmak-cloud/esg-hub/issues/new/choose)
+- **Content errors** (wrong/outdated info, dead links): open a [content error issue](https://github.com/simonmak-ascent/esg-hub/issues/new/choose)
 - **Bugs and code changes**: see [CONTRIBUTING.md](CONTRIBUTING.md)
 - **Security vulnerabilities**: report privately via [SECURITY.md](SECURITY.md)
 
 ## Use with Context7
 
-Up-to-date ESG Hub documentation is indexed on [Context7](https://context7.com/simonplmak-cloud/esg-hub), so coding agents can pull it into context on demand. With the Context7 MCP server or `ctx7` CLI installed, name the library in your prompt:
+Up-to-date ESG Hub documentation is indexed on [Context7](https://context7.com/simonmak-ascent/esg-hub), so coding agents can pull it into context on demand. With the Context7 MCP server or `ctx7` CLI installed, name the library in your prompt:
 
 ```text
-use library /simonplmak-cloud/esg-hub for API and docs
+use library /simonmak-ascent/esg-hub for API and docs
 ```
 
 ## License

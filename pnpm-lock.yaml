@@ -31,12 +31,12 @@ importers:
       '@simonmak-ascent/esg-hub-mcp':
         specifier: file:./mcp-server
         version: file:mcp-server
-      '@simonplmak-cloud/utils':
-        specifier: 1.1.0
-        version: 1.1.0(clsx@2.1.1)(react@19.2.8)
-      '@simonplmak-cloud/validation':
-        specifier: 1.1.0
-        version: 1.1.0(zod@4.4.3)
+      '@simonmak-ascent/utils':
+        specifier: 1.1.1
+        version: 1.1.1(clsx@2.1.1)(react@19.2.8)
+      '@simonmak-ascent/validation':
+        specifier: 1.1.1
+        version: 1.1.1(zod@4.4.3)
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -786,14 +786,14 @@ packages:
     resolution: {directory: mcp-server, type: directory}
     hasBin: true
 
-  '@simonplmak-cloud/utils@1.1.0':
-    resolution: {integrity: sha512-9DBtbNduG5NPhRKzdkkUwvyZMuPN+IhH+/CqNuxb+/E5D9AcM7IRDGBv2ORj/WoHCStXz0l8mM08pVIkMPSVSw==, tarball: https://npm.pkg.github.com/download/@simonplmak-cloud/utils/1.1.0/718289f1cde8298404bacbdb263e0c0a28925687}
+  '@simonmak-ascent/utils@1.1.1':
+    resolution: {integrity: sha512-710lS7DcgZSreCvr/9DJUwfDlrKgIjSaeSLpQldhtKsYqa0gr65i2m/E8xVYczwQqA6albrIxb95vgh7yin29g==, tarball: https://npm.pkg.github.com/download/@simonmak-ascent/utils/1.1.1/0e6bacc452adb2c728e6047832e7f170799de1a2}
     peerDependencies:
       clsx: '>=2.0.0'
       react: '>=18'
 
-  '@simonplmak-cloud/validation@1.1.0':
-    resolution: {integrity: sha512-A58PisSrQeDZ4idsXr9px9CTeF4uHhlwhGjA2MVDxPtiaxPI/Tmwwy4/rEyo4y4/Jt2tJbxt4karjs8rwZHbTQ==, tarball: https://npm.pkg.github.com/download/@simonplmak-cloud/validation/1.1.0/2c38e29d3b91c338b77d6adf69c19edd4054715e}
+  '@simonmak-ascent/validation@1.1.1':
+    resolution: {integrity: sha512-KTXxxlPm2QvcZFt7B25CVyWD7K8DT6cHAoWWny6MDaMI/FV0TjR2F/UyEU2yOWq775GinYvoWXxBJ8TRlWgkbA==, tarball: https://npm.pkg.github.com/download/@simonmak-ascent/validation/1.1.1/bbc37ead3c52b2ac58d1861f242ab01ecf1be533}
     peerDependencies:
       zod: '>=3.0.0'
 
@@ -4051,12 +4051,12 @@ snapshots:
       - '@cfworker/json-schema'
       - supports-color
 
-  '@simonplmak-cloud/utils@1.1.0(clsx@2.1.1)(react@19.2.8)':
+  '@simonmak-ascent/utils@1.1.1(clsx@2.1.1)(react@19.2.8)':
     dependencies:
       clsx: 2.1.1
       react: 19.2.8
 
-  '@simonplmak-cloud/validation@1.1.0(zod@4.4.3)':
+  '@simonmak-ascent/validation@1.1.1(zod@4.4.3)':
     dependencies:
       zod: 4.4.3
 
