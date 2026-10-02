@@ -3,7 +3,7 @@
   "name": "io.github.simonmak-ascent/esg-hub",
   "title": "ESG Hub MCP Server",
   "description": "ESG knowledge base for AI agents: hybrid search, glossary, frameworks, industries, graph traversal.",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "websiteUrl": "https://esg-hub.ascent.partners",
   "repository": {
     "url": "https://github.com/simonmak-ascent/esg-hub",
@@ -19,7 +19,7 @@
     {
       "registryType": "npm",
       "identifier": "@simonmak-ascent/esg-hub-mcp",
-      "version": "1.4.0",
+      "version": "1.4.1",
       "transport": {
         "type": "stdio"
       }
