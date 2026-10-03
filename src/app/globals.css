@@ -3,11 +3,11 @@
 /* ===== ESG Hub Design Tokens — Wikipedia-style Dark Mode ===== */
 :root {
   /* Primary palette — muted teal-green for dark mode */
-  --color-primary: #3a8f71;
-  --color-primary-dark: #2d7a5f;
-  --color-primary-light: #1a2f28;
-  --color-primary-hover: #4ba882;
-  --color-primary-muted: #2d6b55;
+  --color-primary: oklch(0.52 0.1 195);
+  --color-primary-dark: oklch(0.42 0.1 195);
+  --color-primary-light: oklch(0.2 0.05 195);
+  --color-primary-hover: oklch(0.62 0.1 195);
+  --color-primary-muted: oklch(0.32 0.1 195);
 
   /* Backgrounds — Dark grey for reduced eye strain (better than pure black) */
   --color-bg: #121418;
