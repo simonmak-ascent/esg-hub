@@ -1,15 +1,15 @@
 # ESG Hub
 
-> Open-access ESG encyclopedia by Ascent Partners Foundation: 350+ articles on environmental, social and governance topics, sustainability reporting and climate, in English, Chinese and Hindi, plus curated external resources. Content is available through a public REST API and an MCP server for AI agents.
+> Open-access encyclopedia of Environmental, Social, and Governance (ESG) knowledge by Ascent Partners Foundation — 350+ articles, curated resources, a public REST API, and an MCP server. English, Chinese, and Hindi.
 
-## For AI agents
+Live site: https://esg-hub.ascent.partners
+Remote MCP: https://esg-hub.ascent.partners/api/mcp
+Package: https://www.npmjs.com/package/@simonmak-ascent/esg-hub-mcp
+MCP Registry: io.github.simonmak-ascent/esg-hub
+Repository: https://github.com/simonmak-ascent/esg-hub
 
-- REST API (no auth): https://esg-hub.ascent.partners/api/v1 with `/pages`, `/search?q=...`, `/resources`, `/meta`
-- [API documentation](https://esg-hub.ascent.partners/en/developers/api)
-- MCP server source: https://github.com/simonmak-ascent/esg-hub/tree/main/mcp-server (12 tools; read-only: `search_esg`, `search_content`, `get_esg_page`, `list_esg_pages`, `list_esg_resources`, `get_esg_metadata`, `get_term`, `get_related`, `list_frameworks`, `list_industries`; write, token required: `propose_term`, `tag_content`)
-- Context7 library ID: `/simonmak-ascent/esg-hub`
+## Topics
+ESG reporting (IFRS S1/S2, GRI, SASB, TNFD), carbon accounting, climate risk, sustainability strategy, industries, glossary, and frameworks.
 
-## Site
-
-- [English home](https://esg-hub.ascent.partners/en)
-- [Source code](https://github.com/simonmak-ascent/esg-hub)
+## Author
+Ascent Partners Foundation / Simon Mak — https://simonmak.com
