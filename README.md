@@ -1,16 +1,18 @@
-# ESG Hub — Open-Access ESG Encyclopedia
+# ESG Hub
 
-[![Deploy to Vercel](https://github.com/simonmak-ascent/esg-hub/actions/workflows/deploy.yml/badge.svg)](https://github.com/simonmak-ascent/esg-hub/actions/workflows/deploy.yml)
-[![License: MIT (code)](https://img.shields.io/badge/code-MIT-yellow.svg)](LICENSE)
-[![Content: CC BY-SA 4.0](https://img.shields.io/badge/content-CC%20BY--SA%204.0-blue.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
-[![MCP Registry](https://img.shields.io/badge/MCP%20Registry-io.github.simonmak--ascent%2Fesg--hub-4CAF50)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.simonmak-ascent/esg-hub)
-[![Glama](https://glama.ai/mcp/servers/simonmak-ascent/esg-hub/badges/score.svg)](https://glama.ai/mcp/servers/simonmak-ascent/esg-hub)
+<!-- mcp-name: io.github.simonmak-ascent/esg-hub -->
 
 > **An open-access encyclopedia of Environmental, Social, and Governance (ESG) knowledge by [Ascent Partners Foundation](https://www.ascent.partners)** — 350+ articles, 240+ curated resources, books, courses, AI search, a public REST API, and an MCP server. Available in English, Chinese, and Hindi.
 
+[![Deploy to Vercel](https://github.com/simonmak-ascent/esg-hub/actions/workflows/deploy.yml/badge.svg)](https://github.com/simonmak-ascent/esg-hub/actions/workflows/deploy.yml)
+[![MCP Registry](https://img.shields.io/badge/MCP%20Registry-io.github.simonmak--ascent%2Fesg--hub-4CAF50)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.simonmak-ascent/esg-hub)
+[![Glama](https://glama.ai/mcp/servers/simonmak-ascent/esg-hub/badges/score.svg)](https://glama.ai/mcp/servers/simonmak-ascent/esg-hub)
+[![License: MIT (code)](https://img.shields.io/badge/code-MIT-yellow.svg)](LICENSE)
+[![Content: CC BY-SA 4.0](https://img.shields.io/badge/content-CC%20BY--SA%204.0-blue.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
+
 **Live site:** [esg-hub.ascent.partners](https://esg-hub.ascent.partners)
 
-## Features
+## Overview
 
 - **Knowledge base** — 350+ ESG articles across standards (GRI, IFRS S1/S2, TCFD, TNFD, ESRS), regulations, frameworks, ratings, and regional (HK/APAC) guidance
 - **AI search** — ask questions in natural language; answers grounded in the knowledge base (SurrealDB BM25 + vector search, DeepSeek, Brave Search across authoritative ESG domains)
