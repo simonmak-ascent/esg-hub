@@ -6,7 +6,7 @@ File: `~/.config/opencode/opencode.json` (outside repo; changes backed up to `op
 
 | Server | Before | After |
 |--------|--------|-------|
-| `github` | `GITHUB_PERSONAL_ACCESS_TOKEN: "{env:GH_TOKEN}"` (humanity4ai) | `"{env:SIMONPLMAK_CLOUD_PAT}"` |
+| `github` | `GITHUB_PERSONAL_ACCESS_TOKEN: "{env:GH_TOKEN}"` (humanity4ai) | `"{env:SIMONMAK_ASCENT_PAT}"` |
 | `brave-search` | `"enabled": false` (BRAVE_API_KEY set) | `"enabled": true` |
 | `google-search` | `"enabled": false` (GOOGLE_API_KEY + GOOGLE_SEARCH_ENGINE_ID set) | `"enabled": true` |
 | `browserless` | `"enabled": false`, service down | `"enabled": true` **after** service verified (`curl localhost:3000` → 200); if unrepairable, stays disabled with verdict logged (R7) |
