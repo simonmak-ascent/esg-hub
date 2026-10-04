@@ -33,6 +33,69 @@ flowchart TB
   V["Vercel"] --> WEB
 ```
 
+## How a query is answered
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as User
+  participant W as Next.js app (App Router)
+  participant API as /api/ai-search · /api/ai-chat
+  participant S as search.ts
+  participant DB as SurrealDB (page · section · embedding)
+  participant AI as DeepSeek
+  participant X as Brave / OpenAlex
+  U->>W: ask a question
+  W->>API: POST query (+ locale)
+  API->>S: search(query)
+  S->>DB: BM25 keyword + vector (embedding) hybrid ranking
+  DB-->>S: ranked pages / sections + citations
+  API->>AI: synthesize answer from ranked context
+  API->>X: enrich (web + research)
+  X-->>API: references
+  API-->>W: streamed answer + citations
+  W-->>U: grounded response
+```
+
+## Data model
+
+```mermaid
+erDiagram
+  PAGE ||--o{ SECTION : contains
+  SECTION ||--o{ EMBEDDING : "vectorised as"
+  FRAMEWORK ||--o{ PAGE : classifies
+  INDUSTRY ||--o{ PAGE : tags
+  TERM ||--o{ PAGE : defines
+  PAGE {
+    string id
+    string slug
+    string title
+    string lang
+  }
+  SECTION {
+    string id
+    string heading
+    text body
+  }
+  EMBEDDING {
+    vector vector
+    string model
+  }
+```
+
+`FRAMEWORK`, `INDUSTRY` and `TERM` are the facets exposed by the `/api/v1/*` REST
+resources; `page`, `section` and `embedding` are the core SurrealDB tables.
+
+## Deployment
+
+```mermaid
+flowchart LR
+  DEV["git push / PR"] --> CI["GitHub Actions<br/>lint · test · e2e · health-check"]
+  CI --> PREV["Vercel Preview deployment"]
+  PREV -->|merge to main| PROD["Vercel Production<br/>esg-hub.ascent.partners"]
+  PROD --> SURF["/api/mcp · /api/v1<br/>MCP + REST surfaces"]
+```
+
 ## Tech Stack
 
 Next.js 15 (App Router, React 19) · SurrealDB Cloud · Tailwind CSS v4 · next-intl · Vitest + Playwright · Vercel
