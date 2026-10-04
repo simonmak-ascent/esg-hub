@@ -45,3 +45,9 @@ next-env.d.ts
 
 # Playwright MCP transient artifacts
 .playwright-mcp/
+
+# Local agent + VDD methodology artifacts — internal, never published
+AGENTS.md
+constitution.md
+vdd/
+specs/
