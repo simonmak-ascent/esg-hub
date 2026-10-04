@@ -21,11 +21,30 @@
 - **Learning resources** — free courses, books, and a curated video library
 - **i18n** — English, Chinese, Hindi
 
+## Architecture
+
+```mermaid
+flowchart TB
+  U["User / AI agent"] --> WEB["Next.js 15 App Router · React 19<br/>next-intl (en / zh / hi)"]
+  WEB --> DB[("SurrealDB Cloud<br/>BM25 + vector search")]
+  WEB --> AI["DeepSeek + Brave Search<br/>grounded answers"]
+  WEB --> API["Public REST API · /api/v1"]
+  API --> MCP["MCP server<br/>@simonmak-ascent/esg-hub-mcp"]
+  V["Vercel"] --> WEB
+```
+
 ## Tech Stack
 
 Next.js 15 (App Router, React 19) · SurrealDB Cloud · Tailwind CSS v4 · next-intl · Vitest + Playwright · Vercel
 
-## Quick Start
+## Quick Start (≤ 5 minutes)
+
+**Fastest path — nothing to install:** use the live site and the open API.
+
+- **Site:** <https://esg-hub.ascent.partners>
+- **API (no auth):** `GET https://esg-hub.ascent.partners/api/v1/pages`
+
+Run a local copy:
 
 ```bash
 git clone https://github.com/simonmak-ascent/esg-hub.git
