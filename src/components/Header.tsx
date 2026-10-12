@@ -8,6 +8,7 @@ import { useLocale } from "next-intl";
 import { useTranslations } from "next-intl";
 import { CONTENTS_MENU, QUICK_LINKS } from "@/data/sections";
 import LanguageSwitcher from "./LanguageSwitcher";
+import ThemeToggle from "./ThemeToggle";
 
 const CATEGORY_KEYS: Record<string, string> = {
   pillars: "esgPillars",
@@ -279,6 +280,7 @@ export default function Header() {
 
           {/* Quick Links - Desktop */}
           <div className="quick-links">
+            <ThemeToggle />
             <LanguageSwitcher />
             <Link
               href={`/${locale}/developers`}

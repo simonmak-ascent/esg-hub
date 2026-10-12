@@ -19,17 +19,12 @@ export interface SearchResult {
 function resolveLocalizedContent<
   T extends { title: string; title_zh?: string | null; title_hi?: string | null; description?: string | null; description_zh?: string | null; description_hi?: string | null }
 >(record: T, locale: string): { title: string; description: string | undefined } {
-  const isZh = locale === "zh";
-  const isHi = locale === "hi";
-  
-  const title = isZh && record.title_zh 
-    ? record.title_zh 
-    : (isHi && record.title_hi ? record.title_hi : record.title);
-    
-  const description = isZh && record.description_zh 
-    ? record.description_zh 
-    : (isHi && record.description_hi ? record.description_hi : record.description || undefined);
-    
+  const isCjk = locale === "zh" || locale === "hk"; // hk reuses zh copy until its own lands
+
+  const title = isCjk && record.title_zh ? record.title_zh : record.title;
+
+  const description = isCjk && record.description_zh ? record.description_zh : record.description || undefined;
+
   return { title, description };
 }
 

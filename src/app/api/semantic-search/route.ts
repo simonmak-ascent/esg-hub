@@ -63,12 +63,11 @@ async function vectorSearch(
         distance: number;
       }>(pageSql);
       
-      const isZh = locale === "zh";
-      const isHi = locale === "hi";
+      const isCjk = locale === "zh" || locale === "hk"; // hk reuses zh copy until its own lands
       
       for (const r of pageResults) {
-        const title = isZh && r.title_zh ? r.title_zh : (isHi && r.title_hi ? r.title_hi : r.title);
-        const description = isZh && r.description_zh ? r.description_zh : (isHi && r.description_hi ? r.description_hi : r.description || undefined);
+        const title = isCjk && r.title_zh ? r.title_zh : r.title;
+        const description = isCjk && r.description_zh ? r.description_zh : r.description || undefined;
         
         results.push({
           id: r.id,
