@@ -94,8 +94,22 @@ export default function DevelopersLanding() {
             lineHeight: 1.05,
           }}
         >
-          <span className="content-wrapper" style={{ display: "block" }}>{t("title")}</span>
+          <span className="content-wrapper" style={{ display: "block" }}>ESG Hub</span>
         </h1>
+        <span
+          style={{
+            position: "absolute",
+            insetInlineEnd: "1.25rem",
+            bottom: "1rem",
+            color: "rgba(255,255,255,0.9)",
+            fontSize: "0.75rem",
+            fontWeight: 600,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+          }}
+        >
+          REST API + MCP
+        </span>
       </header>
       <div className="content-wrapper">
         <article>
