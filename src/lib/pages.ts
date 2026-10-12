@@ -84,14 +84,13 @@ export function isDbConfigured(): boolean {
  * Resolve localized content from a page
  */
 export function localizePage(page: Page, locale: string): LocalizedPage {
-  const isZh = locale === "zh";
-  const isHi = locale === "hi";
-  
+  const isCjk = locale === "zh" || locale === "hk"; // hk reuses zh copy until its own lands
+
   return {
     ...page,
-    title: isZh && page.title_zh ? page.title_zh : (isHi && page.title_hi ? page.title_hi : page.title),
-    description: isZh && page.description_zh ? page.description_zh : (isHi && page.description_hi ? page.description_hi : page.description),
-    content: isZh && page.content_zh ? page.content_zh : (isHi && page.content_hi ? page.content_hi : page.content),
+    title: isCjk && page.title_zh ? page.title_zh : page.title,
+    description: isCjk && page.description_zh ? page.description_zh : page.description,
+    content: isCjk && page.content_zh ? page.content_zh : page.content,
   };
 }
 

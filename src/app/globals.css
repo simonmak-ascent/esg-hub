@@ -2,32 +2,32 @@
 
 /* ===== ESG Hub Design Tokens — Wikipedia-style Dark Mode ===== */
 :root {
-  /* Primary palette — muted teal-green for dark mode */
-  --color-primary: oklch(0.52 0.1 195);
-  --color-primary-dark: oklch(0.42 0.1 195);
-  --color-primary-light: oklch(0.2 0.05 195);
-  --color-primary-hover: oklch(0.62 0.1 195);
-  --color-primary-muted: oklch(0.32 0.1 195);
+  /* Primary palette — Ascent Partners accent (dark) */
+  --color-primary: #5bc8e8;
+  --color-primary-dark: #7dd6ee;
+  --color-primary-light: #005467;
+  --color-primary-hover: #7dd6ee;
+  --color-primary-muted: #005467;
 
-  /* Backgrounds — Dark grey for reduced eye strain (better than pure black) */
-  --color-bg: #121418;
-  --color-bg-alt: #181c22;
-  --color-bg-secondary: #1e2228;
-  --color-bg-warm: #161a1e;
-  --color-bg-elevated: #222830;
+  /* Backgrounds — APG dark surfaces */
+  --color-bg: #141414;
+  --color-bg-alt: #1e1e1e;
+  --color-bg-secondary: #262626;
+  --color-bg-warm: #1e1e1e;
+  --color-bg-elevated: #262626;
 
   /* Text — high contrast on dark */
-  --color-text: #e0e3e8;
-  --color-text-secondary: #b0b8c4;
-  --color-text-muted: #8892a0;
+  --color-text: #f4f4f4;
+  --color-text-secondary: #e2e2e2;
+  --color-text-muted: #c2c2c2;
 
   /* Borders */
-  --color-border: #2e3440;
-  --color-border-light: #252b34;
+  --color-border: #3a3a3a;
+  --color-border-light: #2e2e2e;
 
-  /* Links — bright enough for dark bg, AAA compliant */
-  --color-link: #6db3f2;
-  --color-link-hover: #8ec5f8;
+  /* Links — APG dark link */
+  --color-link: #7dd6ee;
+  --color-link-hover: #5bc8e8;
 
   /* Semantic — status colors */
   --color-transgressed: #f87171;
@@ -71,8 +71,8 @@
   --color-focus-outline: 3px solid var(--color-focus);
 
   /* Typography */
-  --font-body: "Inter", "Helvetica Neue", "Arial", sans-serif;
-  --font-heading: "Inter", "Helvetica Neue", "Arial", sans-serif;
+  --font-body: "Open Sans", "Segoe UI", Arial, sans-serif;
+  --font-heading: "Titillium Web", "Open Sans", Arial, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 
   /* Layout */
@@ -80,6 +80,32 @@
   --wide-max-width: 1200px;
   --nav-height: 48px;
   --secondary-nav-height: 36px;
+}
+
+/* Light mode — APG light palette (opt-in via [data-theme="light"]). */
+[data-theme="light"] {
+  --color-primary: #005467;
+  --color-primary-dark: #00455a;
+  --color-primary-light: #9ed4e0;
+  --color-primary-hover: #0085ae;
+  --color-primary-muted: #cde9ef;
+
+  --color-bg: #ffffff;
+  --color-bg-alt: #f8f8f8;
+  --color-bg-secondary: #efefef;
+  --color-bg-warm: #f8f8f8;
+  --color-bg-elevated: #ffffff;
+
+  --color-text: #000000;
+  --color-text-secondary: #3c3c3c;
+  --color-text-muted: #4f4f4f;
+
+  --color-border: #efefef;
+  --color-border-light: #f5f5f5;
+
+  --color-link: #005467;
+  --color-link-hover: #00455a;
+  --color-focus: #005467;
 }
 
 @theme inline {

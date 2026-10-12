@@ -6,8 +6,9 @@ import { useRouter, usePathname } from "next/navigation";
 const languages = [
   { code: "en", label: "English", flag: "🇺🇸" },
   { code: "zh", label: "中文", flag: "🇨🇳" },
-  { code: "hi", label: "हिंदी", flag: "🇮🇳" },
+  { code: "hk", label: "繁體", flag: "🇭🇰" },
 ];
+const LOCALE_CODES = ["en", "zh", "hk"];
 
 export default function LanguageSwitcher() {
   const router = useRouter();
@@ -15,7 +16,7 @@ export default function LanguageSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const currentLocale = pathname?.split("/")[1] || "en";
+  const currentLocale = LOCALE_CODES.includes(pathname?.split("/")[1] || "") ? (pathname?.split("/")[1] as string) : "en";
   const currentLang = languages.find((l) => l.code === currentLocale) || languages[0];
 
   useEffect(() => {
@@ -30,12 +31,11 @@ export default function LanguageSwitcher() {
   }, []);
 
   const handleLanguageChange = (locale: string) => {
-    // Get the current path without locale
-    const segments = pathname?.split("/") || [];
-    segments[1] = locale; // Replace locale
-
-    const newPath = segments.join("/");
-    router.push(newPath);
+    // Locale-prefixed routing is "as-needed": en has no prefix, zh/hk do.
+    const segments = (pathname || "/").split("/").filter(Boolean);
+    const rest = LOCALE_CODES.includes(segments[0]) ? segments.slice(1) : segments;
+    const newPath = locale === "en" ? `/${rest.join("/")}` : `/${locale}${rest.length ? "/" + rest.join("/") : ""}`;
+    router.push(newPath || "/");
     setIsOpen(false);
   };
 

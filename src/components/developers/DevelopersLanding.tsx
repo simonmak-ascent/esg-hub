@@ -55,9 +55,50 @@ export default function DevelopersLanding() {
   }));
 
   return (
-    <div className="content-wrapper">
-      <article>
-        <h1>{t("title")}</h1>
+    <>
+      <header
+        data-hero
+        style={{
+          position: "relative",
+          height: "180px",
+          overflow: "hidden",
+          background: "#005467",
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/tool-esg-hub.jpg"
+          alt=""
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+        />
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(90deg, rgba(0,84,103,0.92) 0%, rgba(0,84,103,0.45) 45%, rgba(0,84,103,0) 100%)",
+          }}
+        />
+        <h1
+          style={{
+            position: "absolute",
+            insetInline: 0,
+            bottom: 0,
+            margin: 0,
+            paddingBottom: "1rem",
+            color: "#ffffff",
+            fontFamily: "var(--font-heading)",
+            fontSize: "clamp(1.75rem, 5vw, 3.25rem)",
+            fontWeight: 900,
+            lineHeight: 1.05,
+          }}
+        >
+          <span className="content-wrapper" style={{ display: "block" }}>{t("title")}</span>
+        </h1>
+      </header>
+      <div className="content-wrapper">
+        <article>
         <p
           style={{
             fontSize: "1.05rem",
@@ -334,5 +375,6 @@ export default function DevelopersLanding() {
         </div>
       </article>
     </div>
+    </>
   );
 }
