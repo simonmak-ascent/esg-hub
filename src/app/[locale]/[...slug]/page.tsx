@@ -75,7 +75,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const pageTitle = page.title;
   const pageDescription = page.description || `${page.title} — ESG Hub by Ascent Partners Foundation`;
-  const canonicalUrl = `${SITE_URL}/${locale}${formatPermalink(permalink)}`;
+  const canonicalUrl = `${SITE_URL}${locale === "en" ? "" : `/${locale}`}${formatPermalink(permalink)}`;
 
   return {
     title: pageTitle,

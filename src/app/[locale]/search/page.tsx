@@ -11,16 +11,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "AISearch" });
   
+  const path = locale === "en" ? "/search" : `/${locale}/search`;
   return {
     title: `Search — ESG Hub`,
     description: t("description"),
     alternates: {
-      canonical: `https://esg-hub.ascent.partners/${locale}/search`,
+      canonical: `https://esg-hub.ascent.partners${path}`,
     },
     openGraph: {
       title: `Search — ESG Hub AI Agent`,
       description: t("description"),
-      url: `https://esg-hub.ascent.partners/${locale}/search`,
+      url: `https://esg-hub.ascent.partners${path}`,
       siteName: "ESG Hub",
       type: "website",
     },
