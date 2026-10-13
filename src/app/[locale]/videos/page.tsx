@@ -14,15 +14,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Videos" });
   
+  const path = locale === "en" ? "/videos" : `/${locale}/videos`;
   return {
     title: t("title"),
     description: t("description"),
-    alternates: { canonical: `https://esg-hub.ascent.partners/${locale}/videos` },
+    alternates: { canonical: `https://esg-hub.ascent.partners${path}` },
     openGraph: {
       title: "ESG Video Library — ESG Hub",
       description:
         "Curated collection of educational ESG videos, webinars, and expert interviews.",
-      url: `https://esg-hub.ascent.partners/${locale}/videos`,
+      url: `https://esg-hub.ascent.partners${path}`,
       siteName: "ESG Hub",
       type: "website",
       images: [{ url: "/og-image.png", width: 1200, height: 630 }],

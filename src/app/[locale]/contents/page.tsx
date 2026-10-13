@@ -11,11 +11,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Contents" });
   
+  const path = locale === "en" ? "/contents" : `/${locale}/contents`;
   return {
     title: t("title"),
     description: t("description"),
     alternates: {
-      canonical: `https://esg-hub.ascent.partners/${locale}/contents`,
+      canonical: `https://esg-hub.ascent.partners${path}`,
     },
   };
 }
