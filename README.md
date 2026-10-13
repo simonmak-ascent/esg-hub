@@ -2,7 +2,7 @@
 
 <!-- mcp-name: io.github.simonmak-ascent/esg-hub -->
 
-> **An open-access encyclopedia of Environmental, Social, and Governance (ESG) knowledge by [Ascent Partners Foundation](https://www.ascent.partners)** — 350+ articles, 240+ curated resources, books, courses, AI search, a public REST API, and an MCP server. Available in English, Chinese, and Hindi.
+> **An open-access encyclopedia of Environmental, Social, and Governance (ESG) knowledge by [Ascent Partners Foundation](https://www.ascent.partners)** — 350+ articles, 240+ curated resources, books, courses, AI search, a public REST API, and an MCP server. Available in English, Simplified Chinese, and Traditional Chinese (Hong Kong).
 
 [![Deploy to Vercel](https://github.com/simonmak-ascent/esg-hub/actions/workflows/deploy.yml/badge.svg)](https://github.com/simonmak-ascent/esg-hub/actions/workflows/deploy.yml)
 [![MCP Registry](https://img.shields.io/badge/MCP%20Registry-io.github.simonmak--ascent%2Fesg--hub-4CAF50)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.simonmak-ascent/esg-hub)
@@ -19,13 +19,13 @@
 - **Public REST API** — open access to all content: [`/api/v1`](https://esg-hub.ascent.partners/api/v1)
 - **MCP server** — connect AI agents directly: [`@esg-hub/mcp-server`](mcp-server/)
 - **Learning resources** — free courses, books, and a curated video library
-- **i18n** — English, Chinese, Hindi
+- **i18n** — English, Simplified Chinese (zh), Traditional Chinese — Hong Kong (hk)
 
 ## Architecture
 
 ```mermaid
 flowchart TB
-  U["User / AI agent"] --> WEB["Next.js 15 App Router · React 19<br/>next-intl (en / zh / hi)"]
+  U["User / AI agent"] --> WEB["Next.js 16 App Router · React 19<br/>next-intl (en / zh / hk)"]
   WEB --> DB[("SurrealDB Cloud<br/>BM25 + vector search")]
   WEB --> AI["DeepSeek + Brave Search<br/>grounded answers"]
   WEB --> API["Public REST API · /api/v1"]
@@ -98,7 +98,7 @@ flowchart LR
 
 ## Tech Stack
 
-Next.js 15 (App Router, React 19) · SurrealDB Cloud · Tailwind CSS v4 · next-intl · Vitest + Playwright · Vercel
+Next.js 16 (App Router, React 19) · SurrealDB Cloud · Tailwind CSS v4 · next-intl · Vitest + Playwright · Vercel
 
 ## Quick Start (≤ 5 minutes)
 

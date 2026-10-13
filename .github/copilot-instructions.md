@@ -31,7 +31,7 @@ Choose the agent matching the task type; combine researcher → software-develop
 
 ## Repo specifics
 
-- Next.js 15 + SurrealDB Cloud; i18n locales: en, zh, hi — keep all three in sync for content changes
+- Next.js 16 + SurrealDB Cloud; i18n locales: en, zh, hk — keep all three in sync for content changes
 - Depends on sibling private repo `tool_packages` (see CI checkout pattern in test.yml/ci.yml)
 - pnpm@10.30.3; Node 20 in CI, Node 22 in devcontainer (.nvmrc)
 - Playwright E2E stays on-demand (test.yml), not in PR CI
