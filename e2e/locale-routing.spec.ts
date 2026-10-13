@@ -1,110 +1,101 @@
 import { test, expect } from "@playwright/test";
 
+// Locale routing is "as-needed" (APG parity): English is unprefixed (`/`),
+// the other locales are prefixed (`/zh`, `/hk`).
+const NON_DEFAULT = ["/zh", "/hk"];
+
 test.describe("Locale Routing", () => {
-  test("root redirects to /en/", async ({ page }) => {
+  test("root serves the default (English) locale without a prefix", async ({ page }) => {
     await page.goto("/");
-    await expect(page).toHaveURL(/\/en\/?$/);
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.locator("h1").first()).toContainText("ESG Hub");
   });
 
   test("locale homepages load correctly", async ({ page }) => {
-    await page.goto("/en");
+    await page.goto("/");
     await expect(page.locator("h1").first()).toContainText("ESG Hub");
 
-    await page.goto("/zh");
-    await expect(page.locator("h1").first()).toContainText("ESG");
-
-    await page.goto("/hi");
-    await expect(page.locator("h1").first()).toContainText("ESG");
+    for (const locale of NON_DEFAULT) {
+      await page.goto(locale);
+      await expect(page.locator("h1").first()).toContainText("ESG");
+    }
   });
 
   test("content pages load with locale", async ({ page }) => {
-    await page.goto("/en/environmental");
-    await expect(page.locator("h1").first()).toBeVisible();
-
-    await page.goto("/zh/environmental");
-    await expect(page.locator("h1").first()).toBeVisible();
-
-    await page.goto("/hi/environmental");
-    await expect(page.locator("h1").first()).toBeVisible();
+    for (const prefix of ["", ...NON_DEFAULT]) {
+      await page.goto(`${prefix}/environmental`);
+      await expect(page.locator("h1").first()).toBeVisible();
+    }
   });
 
   test("static pages work with locale - search", async ({ page }) => {
-    await page.goto("/en/search");
+    await page.goto("/search");
     await expect(page.locator("h1").first()).toContainText("Search");
 
-    // Non-English locales render translated headings — verify page loads, not text
-    await page.goto("/zh/search");
-    await expect(page.locator("h1").first()).toBeVisible();
-
-    await page.goto("/hi/search");
-    await expect(page.locator("h1").first()).toBeVisible();
+    for (const prefix of NON_DEFAULT) {
+      await page.goto(`${prefix}/search`);
+      await expect(page.locator("h1").first()).toBeVisible();
+    }
   });
 
   test("static pages work with locale - books", async ({ page }) => {
-    await page.goto("/en/books");
+    await page.goto("/books");
     await expect(page.locator("h1").first()).toContainText("ESG Literature");
 
-    // Non-English locales render translated headings — verify page loads, not text
-    await page.goto("/zh/books");
-    await expect(page.locator("h1").first()).toBeVisible();
-
-    await page.goto("/hi/books");
-    await expect(page.locator("h1").first()).toBeVisible();
+    for (const prefix of NON_DEFAULT) {
+      await page.goto(`${prefix}/books`);
+      await expect(page.locator("h1").first()).toBeVisible();
+    }
   });
 
   test("static pages work with locale - videos", async ({ page }) => {
-    await page.goto("/en/videos");
+    await page.goto("/videos");
     await expect(page.locator("h1").first()).toContainText("ESG Video Library");
 
-    // Non-English locales render translated headings — verify page loads, not text
-    await page.goto("/zh/videos");
-    await expect(page.locator("h1").first()).toBeVisible();
-
-    await page.goto("/hi/videos");
-    await expect(page.locator("h1").first()).toBeVisible();
+    for (const prefix of NON_DEFAULT) {
+      await page.goto(`${prefix}/videos`);
+      await expect(page.locator("h1").first()).toBeVisible();
+    }
   });
 
   test("static pages work with locale - contents", async ({ page }) => {
-    await page.goto("/en/contents");
+    await page.goto("/contents");
     await expect(page.locator("h1").first()).toContainText("Contents");
 
-    // Non-English locales render translated headings — verify page loads, not text
-    await page.goto("/zh/contents");
-    await expect(page.locator("h1").first()).toBeVisible();
-
-    await page.goto("/hi/contents");
-    await expect(page.locator("h1").first()).toBeVisible();
+    for (const prefix of NON_DEFAULT) {
+      await page.goto(`${prefix}/contents`);
+      await expect(page.locator("h1").first()).toBeVisible();
+    }
   });
 
   test("language switcher changes locale", async ({ page }) => {
-    await page.goto("/en");
-    
+    await page.goto("/");
+
     // Click on the language dropdown button (has flag emoji)
-    const langButton = page.locator('button').filter({ hasText: /🇺🇸/ }).first();
+    const langButton = page.locator("button").filter({ hasText: /🇺🇸/ }).first();
     await langButton.click();
-    
+
     // Wait for dropdown and click Chinese option
     await page.waitForTimeout(500);
-    const chineseOption = page.locator('button').filter({ hasText: /🇨🇳/ }).first();
+    const chineseOption = page.locator("button").filter({ hasText: /🇨🇳/ }).first();
     await chineseOption.click();
-    
-    // Should redirect to /zh
+
+    // Should navigate to /zh
     await expect(page).toHaveURL(/\/zh\/?$/);
   });
 
   test("page not found shows correct message", async ({ page }) => {
-    await page.goto("/en/nonexistent-page-xyz");
+    await page.goto("/nonexistent-page-xyz");
     await expect(page.locator("h1").filter({ hasText: "Page Not Found" })).toBeVisible();
   });
 
   test("developers pages load with locale", async ({ page }) => {
-    await page.goto("/en/developers");
-    await expect(page.locator("h1").first()).toContainText("Developers");
+    await page.goto("/developers");
+    await expect(page.locator("h1").first()).toContainText("ESG Hub");
 
-    await page.goto("/zh/developers");
-    await expect(page.locator("h1").first()).toBeVisible();
-
-    await page.goto("/hi/developers");
-    await expect(page.locator("h1").first()).toBeVisible();
+    for (const prefix of NON_DEFAULT) {
+      await page.goto(`${prefix}/developers`);
+      await expect(page.locator("h1").first()).toBeVisible();
+    }
   });
 });
