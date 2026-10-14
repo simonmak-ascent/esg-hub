@@ -1,8 +1,8 @@
 {
   "name": "@simonmak-ascent/esg-hub-mcp",
-  "version": "1.4.2",
-  "mcpName": "io.github.simonmak-ascent/esg-hub",
-  "description": "MCP server for the ESG Hub knowledge base — hybrid search, glossary terms, reporting frameworks, industry taxonomy, and knowledge-graph traversal.",
+  "version": "1.4.3",
+  "mcpName": "com.ascent-partners/esg-hub",
+  "description": "MCP server for the ESG Hub knowledge base \u2014 hybrid search, glossary terms, reporting frameworks, industry taxonomy, and knowledge-graph traversal.",
   "type": "module",
   "bin": {
     "esg-hub-mcp": "./dist/index.js"
