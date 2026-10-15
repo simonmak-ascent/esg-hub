@@ -6,7 +6,7 @@
 
 [![Deploy to Vercel](https://github.com/simonmak-ascent/esg-hub/actions/workflows/deploy.yml/badge.svg)](https://github.com/simonmak-ascent/esg-hub/actions/workflows/deploy.yml)
 [![MCP Registry](https://img.shields.io/badge/MCP%20Registry-com.ascent-partners%2Fesg-hub-4CAF50)](https://registry.modelcontextprotocol.io/v0/servers?search=com.ascent-partners/esg-hub)
-[![Glama](https://glama.ai/mcp/servers/simonmak-ascent/esg-hub/badges/score.svg)](https://glama.ai/mcp/servers/simonmak-ascent/esg-hub)
+[![Glama](https://glama.ai/mcp/connectors/com.ascent-partners/esg-hub/badges/score.svg)](https://glama.ai/mcp/connectors/com.ascent-partners/esg-hub)
 [![License: MIT (code)](https://img.shields.io/badge/code-MIT-yellow.svg)](LICENSE)
 [![Content: CC BY-SA 4.0](https://img.shields.io/badge/content-CC%20BY--SA%204.0-blue.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
 
