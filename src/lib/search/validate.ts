@@ -11,22 +11,29 @@ export const EMBEDDING_DIMENSIONS = 384;
 
 /**
  * Coerce a request-supplied KNN result count into a safe integer.
- * Non-numeric, negative, zero, and non-finite values fall back to the default.
+ * Returns `null` when the value is present but not an integer in range, so the
+ * caller can reject it instead of silently substituting a default.
  */
-export function clampResultCount(value: unknown, fallback = 10, max = 50): number {
-  const parsed = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(parsed) || parsed < 1) {
+export function parseResultCount(value: unknown, fallback = 10, max = 50): number | null {
+  if (value === undefined || value === null) {
     return fallback;
   }
-  return Math.min(Math.floor(parsed), max);
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > max) {
+    return null;
+  }
+  return value;
 }
 
 /**
  * Validate a request-supplied embedding vector.
- * Returns the vector, or `null` when it is not an array of finite numbers.
+ * Returns the vector, or `null` when it is not an array of finite numbers of
+ * the expected dimensionality.
  */
-export function parseEmbedding(value: unknown): number[] | null {
-  if (!Array.isArray(value) || value.length === 0 || value.length > 4096) {
+export function parseEmbedding(
+  value: unknown,
+  dimensions = EMBEDDING_DIMENSIONS
+): number[] | null {
+  if (!Array.isArray(value) || value.length !== dimensions) {
     return null;
   }
 

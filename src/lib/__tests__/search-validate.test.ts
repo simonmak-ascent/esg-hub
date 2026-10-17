@@ -1,38 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { clampResultCount, parseEmbedding, parseSource } from "@/lib/search/validate";
-
-describe("clampResultCount", () => {
-  it("accepts a valid integer", () => {
-    expect(clampResultCount(7)).toBe(7);
-  });
-
-  it("clamps to the maximum", () => {
-    expect(clampResultCount(10_000)).toBe(50);
-  });
-
-  it("falls back for non-numeric input", () => {
-    expect(clampResultCount("1,100|> [] ; DROP TABLE page; --")).toBe(10);
-  });
-
-  it("rejects numeric strings that contain SQL", () => {
-    expect(clampResultCount("10; DELETE page")).toBe(10);
-  });
-
-  it("floors floats", () => {
-    expect(clampResultCount(3.9)).toBe(3);
-  });
-
-  it("rejects zero, negatives, and non-finite values", () => {
-    expect(clampResultCount(0)).toBe(10);
-    expect(clampResultCount(-5)).toBe(10);
-    expect(clampResultCount(Infinity)).toBe(10);
-    expect(clampResultCount(NaN)).toBe(10);
-  });
-});
+import { parseEmbedding, parseResultCount, parseSource } from "@/lib/search/validate";
 
 describe("parseEmbedding", () => {
-  it("accepts a numeric vector", () => {
-    expect(parseEmbedding([0.1, -0.2, 3])).toEqual([0.1, -0.2, 3]);
+  it("accepts a 384-dimension numeric vector", () => {
+    const vector = new Array(384).fill(0.1);
+    expect(parseEmbedding(vector)).toHaveLength(384);
   });
 
   it("rejects non-arrays", () => {
@@ -41,15 +13,40 @@ describe("parseEmbedding", () => {
     expect(parseEmbedding({})).toBeNull();
   });
 
-  it("rejects empty and oversized vectors", () => {
+  it("rejects empty, short, and oversized vectors", () => {
     expect(parseEmbedding([])).toBeNull();
+    expect(parseEmbedding([0.1, 0.2])).toBeNull();
     expect(parseEmbedding(new Array(5000).fill(0.1))).toBeNull();
   });
 
   it("rejects non-numeric elements", () => {
-    expect(parseEmbedding([0.1, "0.2"])).toBeNull();
-    expect(parseEmbedding([0.1, NaN])).toBeNull();
-    expect(parseEmbedding([0.1, Infinity])).toBeNull();
+    const base = new Array(384).fill(0.1);
+    expect(parseEmbedding([...base.slice(1), "0.2"])).toBeNull();
+    expect(parseEmbedding([...base.slice(1), NaN])).toBeNull();
+    expect(parseEmbedding([...base.slice(1), Infinity])).toBeNull();
+  });
+});
+
+describe("parseResultCount", () => {
+  it("defaults when absent", () => {
+    expect(parseResultCount(undefined)).toBe(10);
+    expect(parseResultCount(null)).toBe(10);
+  });
+
+  it("accepts an integer in range", () => {
+    expect(parseResultCount(25)).toBe(25);
+    expect(parseResultCount(50)).toBe(50);
+  });
+
+  it("rejects out-of-range and non-integer numbers", () => {
+    expect(parseResultCount(0)).toBeNull();
+    expect(parseResultCount(51)).toBeNull();
+    expect(parseResultCount(3.5)).toBeNull();
+  });
+
+  it("rejects strings, including SQL-shaped payloads", () => {
+    expect(parseResultCount("10")).toBeNull();
+    expect(parseResultCount("10; SELECT * FROM page; --")).toBeNull();
   });
 });
 

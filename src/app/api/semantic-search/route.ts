@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 import { queryHttp } from "@/lib/surrealdb";
-import { clampResultCount, parseEmbedding, parseSource } from "@/lib/search/validate";
+import { parseEmbedding, parseResultCount, parseSource } from "@/lib/search/validate";
 import { checkRateLimit, rateLimitResponse } from "@/lib/middleware/rate-limit";
 import { forbiddenOriginResponse, isAllowedOrigin } from "@/lib/middleware/origin";
 
@@ -145,12 +145,19 @@ export async function POST(request: NextRequest) {
 
     if (!embedding) {
       return NextResponse.json(
-        { error: "embedding must be an array of finite numbers" },
+        { error: "embedding must be an array of 384 finite numbers" },
         { status: 400, headers: CORS_HEADERS }
       );
     }
 
-    const k = clampResultCount(body?.k);
+    const k = parseResultCount(body?.k);
+    if (k === null) {
+      return NextResponse.json(
+        { error: "k must be an integer between 1 and 50" },
+        { status: 400, headers: CORS_HEADERS }
+      );
+    }
+
     const source = parseSource(body?.source);
     const locale = typeof body?.locale === "string" ? body.locale.slice(0, 8) : "en";
 
