@@ -180,8 +180,8 @@ export default function Header() {
             <Image
               src="/esg-hub-logo.png"
               alt=""
-              width={26}
-              height={26}
+              width={200}
+              height={48}
               className="logo-image"
               aria-hidden="true"
             />

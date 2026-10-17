@@ -4,17 +4,17 @@ import { useState, useCallback } from "react";
 import Link from "next/link";
 
 const LANGUAGE_COLORS: Record<string, string> = {
-  javascript: "#f7df1e",
-  typescript: "#3178c6",
-  python: "#3776ab",
-  bash: "#4eaa25",
-  curl: "#012456",
-  json: "#292929",
-  html: "#e34c26",
-  css: "#563d7c",
-  yaml: "#cb171e",
-  shell: "#89e051",
-  default: "#6db3f2",
+  javascript: "var(--apf-color-status-warning)",
+  typescript: "var(--apf-color-brand-green)",
+  python: "var(--apf-color-brand-forest)",
+  bash: "var(--apf-color-status-success)",
+  curl: "var(--apf-color-brand-deep)",
+  json: "var(--apf-color-text-secondary)",
+  html: "var(--apf-color-status-danger)",
+  css: "var(--apf-color-brand-deep)",
+  yaml: "var(--apf-color-status-danger)",
+  shell: "var(--apf-color-status-success)",
+  default: "var(--apf-color-brand-green)",
 };
 
 function getLanguageColor(lang: string): string {
@@ -44,7 +44,7 @@ export function CodeBlock({ children, title, language = "bash" }: CodeBlockProps
           {title && <span className="code-block-filename">{title}</span>}
           <span
             className="code-block-language"
-            style={{ backgroundColor: `${langColor}22`, color: langColor }}
+            style={{ backgroundColor: `color-mix(in srgb, ${langColor} 18%, transparent)`, color: langColor }}
           >
             {language}
           </span>

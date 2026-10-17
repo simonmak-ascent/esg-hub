@@ -1,7 +1,7 @@
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { Open_Sans, Titillium_Web, Raleway } from "next/font/google";
+import { Open_Sans, Raleway } from "next/font/google";
 import { routing } from "@/i18n/routing";
 import type { Metadata } from "next";
 import Header from "@/components/Header";
@@ -14,13 +14,13 @@ export const dynamic = "force-dynamic";
 const SITE_URL = "https://esg-hub.ascent.partners";
 
 const openSans = Open_Sans({ subsets: ["latin"], variable: "--font-open-sans", display: "swap" });
-const titillium = Titillium_Web({ subsets: ["latin"], weight: ["400", "600", "700"], variable: "--font-titillium", display: "swap" });
 const raleway = Raleway({ subsets: ["latin"], variable: "--font-raleway", display: "swap" });
-const fontVariables = `${openSans.variable} ${titillium.variable} ${raleway.variable}`;
+const fontVariables = `${openSans.variable} ${raleway.variable}`;
 
-// Blocking theme init — dark default, persisted choice (APG parity, no FOUC).
+// Blocking theme init — light default (APF parity), persisted choice, no FOUC.
+// Reads the APF key first and falls back to the legacy APG key.
 const THEME_INIT =
-  "try{var v=localStorage.getItem('apg-theme');document.documentElement.setAttribute('data-theme',v==='light'||v==='dark'?v:'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}";
+  "try{var k=localStorage.getItem('apf-theme')||localStorage.getItem('apg-theme');document.documentElement.setAttribute('data-theme',k==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-theme','light');}";
 
 interface LayoutParams {
   params: Promise<{ locale: string }>;
@@ -110,7 +110,7 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale === "zh" ? "zh-Hans" : locale === "hk" ? "zh-Hant-HK" : "en-GB"} data-theme="dark" className={fontVariables}>
+    <html lang={locale === "zh" ? "zh-Hans" : locale === "hk" ? "zh-Hant-HK" : "en-GB"} data-theme="light" className={fontVariables}>
       <body>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
         <NextIntlClientProvider messages={messages}>

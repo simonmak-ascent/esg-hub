@@ -1,0 +1,85 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "note": "Dark theme. Mirrors the light semantic paths name-for-name (see tokens.v2.json). Only colour is redefined; type, space and component geometry are shared."
+  },
+  "primitive": {
+    "color": {
+      "brand": {
+        "forest": "#2d8659",
+        "green": "#3fa06c",
+        "sprout": "#7fcf9c",
+        "deep": "#1a5f3f",
+        "pine": "#14532d"
+      },
+      "shared": {
+        "gold": "#e8c766",
+        "goldInk": "#dfb947",
+        "onGold": "#1a1a1a",
+        "ink": "#373737"
+      },
+      "neutral": {
+        "50": "#f4f4f4",
+        "100": "#e2e2e2",
+        "200": "#c2c2c2",
+        "300": "#3a3a3a",
+        "400": "#555555",
+        "500": "#999999",
+        "600": "#6a6a6a",
+        "700": "#2c2c2c",
+        "800": "#262626",
+        "900": "#1e1e1e",
+        "1000": "#141414",
+        "white": "#ffffff",
+        "black": "#000000"
+      },
+      "status": {
+        "success": "#6fbf8f",
+        "successBg": "#14251a",
+        "warning": "#e8c766",
+        "warningBg": "#2a2211",
+        "danger": "#f0908f",
+        "dangerBg": "#2b1414",
+        "info": "#6fbf8f",
+        "infoBg": "#262626"
+      }
+    }
+  },
+  "semantic": {
+    "color": {
+      "text": {
+        "primary": "{primitive.color.neutral.50}",
+        "secondary": "{primitive.color.neutral.100}",
+        "tertiary": "{primitive.color.neutral.200}",
+        "muted": "{primitive.color.neutral.200}",
+        "inverse": "{primitive.color.neutral.1000}",
+        "heading": "{primitive.color.brand.sprout}",
+        "link": "{primitive.color.brand.sprout}",
+        "linkHover": "{primitive.color.brand.green}",
+        "accent": "{primitive.color.brand.sprout}"
+      },
+      "surface": {
+        "page": "{primitive.color.neutral.1000}",
+        "raised": "{primitive.color.neutral.900}",
+        "inset": "{primitive.color.neutral.800}",
+        "footerBand": "{primitive.color.brand.pine}",
+        "heroBand": "{primitive.color.neutral.900}"
+      },
+      "border": {
+        "subtle": "{primitive.color.neutral.300}",
+        "focus": "{primitive.color.brand.sprout}"
+      },
+      "brand": {
+        "default": "{primitive.color.brand.green}",
+        "dark": "{primitive.color.brand.deep}",
+        "deep": "{primitive.color.brand.forest}"
+      },
+      "status": {
+        "success": "{primitive.color.status.success}",
+        "warning": "{primitive.color.status.warning}",
+        "danger": "{primitive.color.status.danger}",
+        "info": "{primitive.color.status.info}"
+      }
+    }
+  }
+}

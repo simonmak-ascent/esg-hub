@@ -62,7 +62,7 @@ export default function DevelopersLanding() {
           position: "relative",
           height: "180px",
           overflow: "hidden",
-          background: "#005467",
+          background: "var(--apf-color-brand-forest)",
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -77,7 +77,7 @@ export default function DevelopersLanding() {
             position: "absolute",
             inset: 0,
             background:
-              "linear-gradient(90deg, rgba(0,84,103,0.92) 0%, rgba(0,84,103,0.45) 45%, rgba(0,84,103,0) 100%)",
+              "linear-gradient(90deg, color-mix(in srgb, var(--apf-color-brand-forest) 92%, transparent) 0%, color-mix(in srgb, var(--apf-color-brand-forest) 45%, transparent) 45%, transparent 100%)",
           }}
         />
         <h1
@@ -87,7 +87,7 @@ export default function DevelopersLanding() {
             bottom: 0,
             margin: 0,
             paddingBottom: "1rem",
-            color: "#ffffff",
+            color: "var(--apf-color-text-inverse)",
             fontFamily: "var(--font-heading)",
             fontSize: "clamp(1.75rem, 5vw, 3.25rem)",
             fontWeight: 900,
@@ -143,7 +143,7 @@ export default function DevelopersLanding() {
                 gap: "0.75rem",
                 padding: "1rem",
                 background: "var(--color-bg-secondary)",
-                borderRadius: "8px",
+                borderRadius: 0,
                 border: "1px solid var(--color-border)",
               }}
             >
@@ -181,7 +181,7 @@ export default function DevelopersLanding() {
               display: "block",
               padding: "1.5rem",
               border: "1px solid var(--color-border)",
-              borderRadius: "8px",
+              borderRadius: 0,
               textDecoration: "none",
               color: "inherit",
               transition: "border-color 0.2s, box-shadow 0.2s, transform 0.2s",
@@ -204,7 +204,7 @@ export default function DevelopersLanding() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  borderRadius: "8px",
+                  borderRadius: 0,
                   backgroundColor: "var(--color-accent-bg)",
                   color: "var(--color-accent)",
                   fontFamily: "var(--font-mono)",
@@ -235,7 +235,7 @@ export default function DevelopersLanding() {
                     fontSize: "0.75rem",
                     padding: "0.2rem 0.5rem",
                     background: "var(--color-bg-alt)",
-                    borderRadius: "4px",
+                    borderRadius: 0,
                     color: "var(--color-text-muted)",
                   }}
                 >
@@ -252,7 +252,7 @@ export default function DevelopersLanding() {
               display: "block",
               padding: "1.5rem",
               border: "1px solid var(--color-border)",
-              borderRadius: "8px",
+              borderRadius: 0,
               textDecoration: "none",
               color: "inherit",
               transition: "border-color 0.2s, box-shadow 0.2s, transform 0.2s",
@@ -275,7 +275,7 @@ export default function DevelopersLanding() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  borderRadius: "8px",
+                  borderRadius: 0,
                   backgroundColor: "var(--color-accent-bg)",
                   color: "var(--color-accent)",
                   fontWeight: 700,
@@ -305,7 +305,7 @@ export default function DevelopersLanding() {
                     fontSize: "0.75rem",
                     padding: "0.2rem 0.5rem",
                     background: "var(--color-bg-alt)",
-                    borderRadius: "4px",
+                    borderRadius: 0,
                     color: "var(--color-text-muted)",
                   }}
                 >
@@ -322,7 +322,7 @@ export default function DevelopersLanding() {
             marginBottom: "2.5rem",
             padding: "1.5rem",
             background: "var(--color-bg-secondary)",
-            borderRadius: "8px",
+            borderRadius: 0,
             border: "1px solid var(--color-border)",
           }}
         >
@@ -360,7 +360,7 @@ export default function DevelopersLanding() {
                   padding: "1rem",
                   textAlign: "center",
                   border: "1px solid var(--color-border)",
-                  borderRadius: "8px",
+                  borderRadius: 0,
                   backgroundColor: "var(--color-surface)",
                 }}
               >

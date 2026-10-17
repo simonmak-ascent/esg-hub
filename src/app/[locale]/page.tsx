@@ -57,9 +57,10 @@ export default async function HomePage({
       <ClientRedirect />
       <div
         style={{
-          background: "var(--color-bg-alt)",
-          borderBottom: "1px solid var(--color-border)",
-          padding: "2.5rem 1.5rem 2rem",
+          background: "var(--apf-color-surface-hero)",
+          borderBottom: "3px solid var(--apf-color-gold)",
+          padding: "3.5rem 1.5rem 3rem",
+          color: "var(--apf-color-neutral-white)",
         }}
       >
         <div
@@ -72,11 +73,13 @@ export default async function HomePage({
           <h1
             style={{
               fontFamily: "var(--font-heading)",
-              fontSize: "2rem",
+              fontSize: "clamp(2rem, 4vw, 3.25rem)",
               fontWeight: 700,
-              color: "var(--color-text)",
+              letterSpacing: "0.03em",
+              textTransform: "uppercase",
+              color: "var(--apf-color-neutral-white)",
               marginTop: 0,
-              marginBottom: "0.3rem",
+              marginBottom: "0.5rem",
               borderBottom: "none",
               paddingBottom: 0,
             }}
@@ -85,10 +88,10 @@ export default async function HomePage({
           </h1>
           <p
             style={{
-              fontSize: "1rem",
-              color: "var(--color-text-secondary)",
-              maxWidth: "600px",
-              margin: "0 auto 1.25rem",
+              fontSize: "var(--apf-font-size-18)",
+              color: "color-mix(in srgb, var(--apf-color-neutral-white) 88%, transparent)",
+              maxWidth: "640px",
+              margin: "0 auto 1.75rem",
               lineHeight: 1.6,
             }}
           >
@@ -181,7 +184,7 @@ export default async function HomePage({
                   padding: "0.4em 0.9em",
                   background: "var(--color-bg)",
                   border: "1px solid var(--color-border)",
-                  borderRadius: "4px",
+                  borderRadius: 0,
                   fontSize: "0.85rem",
                   color: "var(--color-link)",
                   textDecoration: "none",

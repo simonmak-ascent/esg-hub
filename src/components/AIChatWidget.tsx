@@ -306,7 +306,7 @@ export default function AIChatWidget() {
                           ol: ({ children }) => <ol style={{ paddingLeft: "1.2em", margin: "0.3em 0" }}>{children}</ol>,
                           li: ({ children }) => <li style={{ margin: "0.15em 0" }}>{children}</li>,
                           code: ({ children }) => (
-                            <code style={{ background: "var(--color-bg-secondary)", padding: "0.1em 0.3em", borderRadius: "2px", fontSize: "0.88em" }}>
+                            <code style={{ background: "var(--color-bg-secondary)", padding: "0.1em 0.3em", borderRadius: 0, fontSize: "0.88em" }}>
                               {children}
                             </code>
                           ),
@@ -356,7 +356,7 @@ export default function AIChatWidget() {
                                 marginTop: "0.3rem",
                                 padding: "0.5rem 0.6rem",
                                 background: "var(--color-bg)",
-                                borderRadius: "4px",
+                                borderRadius: 0,
                                 fontSize: "0.78rem",
                                 color: "var(--color-text-muted)",
                                 lineHeight: 1.5,

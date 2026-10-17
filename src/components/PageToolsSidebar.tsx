@@ -340,9 +340,9 @@ export default function PageToolsSidebar({ page, locale = "en" }: PageToolsSideb
                 fontSize: "0.85rem",
                 padding: "0.4rem 0.75rem",
                 background: "var(--color-primary)",
-                color: "#fff",
+                color: "var(--apf-color-text-inverse)",
                 border: "none",
-                borderRadius: "3px",
+                borderRadius: 0,
                 cursor: loading ? "not-allowed" : "pointer",
                 opacity: loading ? 0.7 : 1,
               }}

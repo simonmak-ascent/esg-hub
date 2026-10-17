@@ -146,7 +146,7 @@ export default async function BooksPage({ params }: Props) {
                 style={{
                   background: "var(--color-bg-alt)",
                   border: "1px solid var(--color-border-light)",
-                  borderRadius: "4px",
+                  borderRadius: 0,
                   padding: "1.2rem",
                   display: "flex",
                   flexDirection: "column",
@@ -159,7 +159,7 @@ export default async function BooksPage({ params }: Props) {
                         width: "60px",
                         height: "80px",
                         flexShrink: 0,
-                        borderRadius: "2px",
+                        borderRadius: 0,
                         overflow: "hidden",
                         border: "1px solid var(--color-border)",
                         position: "relative",
@@ -180,7 +180,7 @@ export default async function BooksPage({ params }: Props) {
                         height: "80px",
                         background: "var(--color-bg-secondary)",
                         border: "1px solid var(--color-border)",
-                        borderRadius: "2px",
+                        borderRadius: 0,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -236,8 +236,8 @@ export default async function BooksPage({ params }: Props) {
                         fontWeight: 500,
                         padding: "0.35em 0.7em",
                         background: "var(--color-primary)",
-                        color: "#fff",
-                        borderRadius: "3px",
+                        color: "var(--apf-color-text-inverse)",
+                        borderRadius: 0,
                         textDecoration: "none",
                       }}
                     >
