@@ -34,6 +34,10 @@ export default function PageToolsSidebar({ page, locale = "en" }: PageToolsSideb
   const [retryCount, setRetryCount] = useState(0);
   const [liveStatus, setLiveStatus] = useState<string>("");
 
+  // The related/backlinks routes resolve permalinks, record IDs and slugs.
+  // A permalink survives record re-creation; the record ID does not.
+  const pageIdentifier = page.permalink || page.id;
+
   const fetchCrossReferences = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -42,26 +46,30 @@ export default function PageToolsSidebar({ page, locale = "en" }: PageToolsSideb
     try {
       // Fetch related pages (automatic, max 15)
       const relatedRes = await fetch(
-        `/api/v1/pages/${encodeURIComponent(page.id)}/related?limit=${MAX_RELATED_PAGES}`
+        `/api/v1/pages/${encodeURIComponent(pageIdentifier)}/related?limit=${MAX_RELATED_PAGES}`
       );
-      
+
       let relatedData: RelatedPage[] = [];
       if (relatedRes.ok) {
         const data = await relatedRes.json();
         relatedData = data.data || [];
         setRelatedPages(relatedData);
+      } else {
+        throw new Error(`Related request failed: ${relatedRes.status}`);
       }
 
       // Fetch backlinks (show all)
       const backlinksRes = await fetch(
-        `/api/v1/pages/${encodeURIComponent(page.id)}/backlinks`
+        `/api/v1/pages/${encodeURIComponent(pageIdentifier)}/backlinks`
       );
-      
+
       let backlinksData: BacklinkPage[] = [];
       if (backlinksRes.ok) {
         const data = await backlinksRes.json();
         backlinksData = data.data || [];
         setBacklinks(backlinksData);
+      } else {
+        throw new Error(`Backlinks request failed: ${backlinksRes.status}`);
       }
 
       // Announce completion to screen readers
@@ -78,14 +86,14 @@ export default function PageToolsSidebar({ page, locale = "en" }: PageToolsSideb
     } finally {
       setLoading(false);
     }
-  }, [page.id, t]);
+  }, [pageIdentifier, t]);
 
   useEffect(() => {
-    if (page.id) {
+    if (pageIdentifier) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchCrossReferences();
     }
-  }, [page.id, fetchCrossReferences]);
+  }, [pageIdentifier, fetchCrossReferences]);
 
   const handleRetry = () => {
     setRetryCount(prev => prev + 1);

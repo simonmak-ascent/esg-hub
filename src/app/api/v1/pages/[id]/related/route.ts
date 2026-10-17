@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getPageByPermalink, isDbConfigured, DB_ERROR } from "@/lib/pages";
 import { queryHttp } from "@/lib/surrealdb";
 import { formatPermalink } from "@/lib/utils";
+import { parsePageIdentifier } from "@/lib/page-identifier";
 
 export const runtime = "nodejs";
 
@@ -10,20 +11,6 @@ interface RelatedPage {
   title: string;
   permalink: string;
   section: string | null;
-}
-
-function validatePageId(id: string): { valid: boolean; error?: string } {
-  if (!id || typeof id !== "string") {
-    return { valid: false, error: "Page identifier is required" };
-  }
-  if (id.length > 500) {
-    return { valid: false, error: "Page identifier too long" };
-  }
-  // Only allow alphanumeric, hyphens, underscores, slashes
-  if (!/^[\w\-\/]+$/.test(id)) {
-    return { valid: false, error: "Invalid page identifier format" };
-  }
-  return { valid: true };
 }
 
 function validateLimit(limitParam: string | null): { valid: boolean; value?: number; error?: string } {
@@ -43,13 +30,22 @@ function validateLimit(limitParam: string | null): { valid: boolean; value?: num
   return { valid: true, value: Math.floor(limit) };
 }
 
-async function resolvePageId(idOrPermalink: string): Promise<string | null> {
-  if (idOrPermalink.startsWith("page:")) {
-    return idOrPermalink;
+async function resolvePageId(identifier: { value: string; kind: "record" | "path" }): Promise<string | null> {
+  if (identifier.kind === "record") {
+    return identifier.value;
   }
-  const page = await getPageByPermalink(formatPermalink(idOrPermalink));
-  if (!page || page === DB_ERROR) return null;
-  return page.id;
+
+  const page = await getPageByPermalink(formatPermalink(identifier.value));
+  if (page && page !== DB_ERROR) {
+    return page.id;
+  }
+
+  // Bare slug for a page nested under a hub (e.g. `physical-climate-risk`).
+  const bySlug = await queryHttp<{ id: string }>(
+    `SELECT id FROM page WHERE slug = $slug LIMIT 1;`,
+    { slug: identifier.value.split("/").pop() }
+  );
+  return bySlug?.[0]?.id ?? null;
 }
 
 
@@ -75,7 +71,7 @@ export async function GET(
     const { id } = await params;
     
     // Validate id parameter
-    const idValidation = validatePageId(id);
+    const idValidation = parsePageIdentifier(id);
     if (!idValidation.valid) {
       return NextResponse.json({ error: idValidation.error }, { status: 400 });
     }
@@ -89,7 +85,7 @@ export async function GET(
     }
     const limit = limitValidation.value!;
 
-    const pageId = await resolvePageId(id);
+    const pageId = await resolvePageId({ value: idValidation.value, kind: idValidation.kind });
     if (!pageId) {
       return NextResponse.json({ data: [] }, { status: 404 });
     }
