@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+import { checkRateLimit, rateLimitResponse } from "@/lib/middleware/rate-limit";
+import { forbiddenOriginResponse, isAllowedOrigin } from "@/lib/middleware/origin";
 
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
@@ -39,6 +41,15 @@ export async function OPTIONS() {
 
 export async function POST(req: NextRequest) {
   try {
+    if (!isAllowedOrigin(req)) {
+      return forbiddenOriginResponse();
+    }
+
+    const limit = checkRateLimit(req, { max: 20, windowMs: 60_000 });
+    if (limit.rateLimited) {
+      return rateLimitResponse(limit);
+    }
+
     if (!DEEPSEEK_API_KEY) {
       return NextResponse.json(
         { error: "AI service not configured" },

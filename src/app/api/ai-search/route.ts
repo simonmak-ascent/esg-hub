@@ -4,6 +4,8 @@ export const runtime = "nodejs";
 import { queryHttpAll, sanitize } from "@/lib/surrealdb";
 import { rrfFusion, esgRerank, type RrfInput } from "@/lib/search/hybrid";
 import type { RankedResult } from "@/lib/search/types";
+import { checkRateLimit, rateLimitResponse } from "@/lib/middleware/rate-limit";
+import { forbiddenOriginResponse, isAllowedOrigin } from "@/lib/middleware/origin";
 
 /**
  * AI-Powered Search Agent API
@@ -441,6 +443,15 @@ export async function OPTIONS() {
 
 export async function POST(req: NextRequest) {
   try {
+    if (!isAllowedOrigin(req)) {
+      return forbiddenOriginResponse();
+    }
+
+    const limit = checkRateLimit(req, { max: 10, windowMs: 60_000 });
+    if (limit.rateLimited) {
+      return rateLimitResponse(limit);
+    }
+
     const body = await req.json();
     const { query, embedding, mode = "deep" } = body;
 

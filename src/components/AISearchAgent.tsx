@@ -347,7 +347,7 @@ export default function AISearchAgent() {
   };
 
   return (
-    <div className="content-wrapper" id="main-content" style={{ maxWidth: "var(--wide-max-width)" }}>
+    <div className="content-wrapper" style={{ maxWidth: "var(--wide-max-width)" }}>
       {/* ── Hero Search Box ── */}
       <div style={{
         textAlign: "center",

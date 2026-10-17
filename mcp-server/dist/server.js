@@ -6,6 +6,7 @@ const WRITE_TOKEN = process.env.ESG_HUB_WRITE_TOKEN || "";
 const SERVER_NAME = "esg-hub";
 const SERVER_VERSION = "1.4.0";
 const TOOL_COUNT = 15;
+const READ_ONLY_TOOL_COUNT = 12;
 /**
  * Helper to call the ESG Hub REST API
  */
@@ -158,8 +159,8 @@ const paginationSchema = z
     next_offset: z.number().nullable(),
 })
     .passthrough();
-// ── Create MCP Server ──────────────────────────────────────────────────
-export function createMcpServer() {
+export function createMcpServer(options = {}) {
+    const toolCount = options.readOnly ? READ_ONLY_TOOL_COUNT : TOOL_COUNT;
     const server = new McpServer({
         name: SERVER_NAME,
         version: SERVER_VERSION,
@@ -190,14 +191,14 @@ export function createMcpServer() {
             content: [
                 {
                     type: "text",
-                    text: `# ESG Hub MCP Server\n\n- Version: ${SERVER_VERSION}\n- API: ${API_BASE}\n- Tools: ${TOOL_COUNT}\n- Healthy: ${healthy}\n\nUse get_esg_metadata for knowledge-base counts and filter vocabulary.`,
+                    text: `# ESG Hub MCP Server\n\n- Version: ${SERVER_VERSION}\n- API: ${API_BASE}\n- Tools: ${toolCount}\n- Healthy: ${healthy}\n\nUse get_esg_metadata for knowledge-base counts and filter vocabulary.`,
                 },
             ],
             structuredContent: {
                 name: SERVER_NAME,
                 version: SERVER_VERSION,
                 api_base: API_BASE,
-                tool_count: TOOL_COUNT,
+                tool_count: toolCount,
                 healthy,
             },
         };
@@ -698,141 +699,149 @@ ${domainsStr}`,
             return mapApiError(err, "The terms endpoint should always be available — retry in a few seconds.");
         }
     });
-    // ── Tool: propose_term ──────────────────────────────────────────────────
-    server.registerTool("propose_term", {
-        title: "Propose Glossary Term",
-        description: "Submit a new glossary term for human review. Nothing is published immediately: the call creates a pending proposal and returns a `proposal_id`; a reviewer decides whether it goes live, and only an approved term later appears in get_term. Use it only when the user explicitly wants to contribute a term; to look one up use get_term. `name` is the display name and `definition` must be at least 10 characters; `facets` is optional and its values should come from get_esg_metadata / list_industries vocabularies. Requires a write token in ESG_HUB_WRITE_TOKEN — a missing or invalid token returns 401 — and calls are rate-limited.",
-        inputSchema: {
-            name: z.string().min(1).max(200).describe("The glossary term name (e.g., 'Materiality Assessment')"),
-            definition: z.string().min(10).max(5000).describe("Full definition of the term (min 10 characters)"),
-            facets: z
-                .object({
-                topic: z.array(z.string()).optional().describe("Topic areas"),
-                industry: z.array(z.string()).optional().describe("Relevant industries"),
-                framework: z.array(z.string()).optional().describe("Related frameworks/standards"),
-                jurisdiction: z.array(z.string()).optional().describe("Relevant jurisdictions"),
-                stakeholder: z.array(z.string()).optional().describe("Affected stakeholder groups"),
-                content_type: z.string().optional().describe("Content classification"),
-            })
-                .optional()
-                .describe("Optional metadata facets for the term"),
-        },
-        outputSchema: { proposal_id: z.string(), status: z.string() },
-        annotations: { readOnlyHint: false, destructiveHint: false },
-    }, async ({ name, definition, facets }) => {
-        try {
-            const body = { name, definition };
-            if (facets)
-                body.facets = facets;
-            const result = await apiPost("/terms", body);
-            return {
-                content: [
-                    {
-                        type: "text",
-                        text: `Term proposal submitted: **${name}**\n\nProposal ID: ${result.proposal_id}\nStatus: ${result.status}\n\nYour proposal will be reviewed before publication.`,
-                    },
-                ],
-                structuredContent: { proposal_id: result.proposal_id, status: result.status },
-            };
-        }
-        catch (err) {
-            return mapWriteError(err, "Ensure name and definition are provided and the term doesn't already exist.");
-        }
-    });
-    // ── Tool: tag_content ────────────────────────────────────────────────────
-    server.registerTool("tag_content", {
-        title: "Tag Content Facets",
-        description: "Replace the facet tags on one existing ESG Hub page: `topic`, `industry`, `framework`, `jurisdiction`, `stakeholder`, and `content_type`. The supplied `facets` object replaces the page's facet set, so any facet key you omit is cleared; the page body and title are never changed or deleted. The response echoes the page's new `facets` and `updated_at`. The array facets (`topic`, `industry`, `framework`, `jurisdiction`, `stakeholder`) each accept multiple values, while `content_type` is a single string; values are validated against the vocabulary from get_esg_metadata / list_industries, and an unrecognised value or key is rejected with 400. Give `page_id` as a permalink, slug, or record ID — permalinks are resolved to the underlying record server-side. Use it to curate tags; to read a page use get_esg_page, and to queue a removal use flag_content. Requires ESG_HUB_WRITE_TOKEN; rate-limited.",
-        inputSchema: {
-            page_id: z.string().min(1).describe("Page permalink, slug, or record ID (e.g., 'page:abc123')"),
-            facets: z
-                .object({
-                topic: z.array(z.string()).optional().describe("Topic classifications"),
-                industry: z.array(z.string()).optional().describe("Relevant industry sectors"),
-                framework: z.array(z.string()).optional().describe("Related ESG frameworks/standards"),
-                jurisdiction: z.array(z.string()).optional().describe("Applicable jurisdictions"),
-                stakeholder: z.array(z.string()).optional().describe("Stakeholder groups affected"),
-                content_type: z.string().optional().describe("Content type (e.g., 'guide', 'reference')"),
-            })
-                .describe("Facet tags to apply to the page"),
-        },
-        outputSchema: {
-            page_id: z.string(),
-            title: z.string(),
-            facets: z.record(z.string(), z.unknown()),
-            updated_at: z.string().nullable(),
-        },
-        annotations: { readOnlyHint: false, destructiveHint: false },
-    }, async ({ page_id, facets }) => {
-        try {
-            // Resolve a permalink/slug to the SurrealDB record ID the facets route requires.
-            let recordId = page_id;
-            if (!recordId.startsWith("page:")) {
-                const page = await apiGet(`/pages/${encodeURIComponent(page_id)}`);
-                recordId = page.data.id;
+    // ── Write tools (stdio only) ────────────────────────────────────────────
+    //
+    // These call the REST write endpoints and attach the deployment's own bearer
+    // token. They are not registered on the remote HTTP transport: exposing them
+    // there would turn a public, unauthenticated endpoint into an anonymous write
+    // API the moment ESG_HUB_WRITE_TOKEN is configured.
+    if (!options.readOnly) {
+        // ── Tool: propose_term ──────────────────────────────────────────────────
+        server.registerTool("propose_term", {
+            title: "Propose Glossary Term",
+            description: "Submit a new glossary term for human review. Nothing is published immediately: the call creates a pending proposal and returns a `proposal_id`; a reviewer decides whether it goes live, and only an approved term later appears in get_term. Use it only when the user explicitly wants to contribute a term; to look one up use get_term. `name` is the display name and `definition` must be at least 10 characters; `facets` is optional and its values should come from get_esg_metadata / list_industries vocabularies. Requires a write token in ESG_HUB_WRITE_TOKEN — a missing or invalid token returns 401 — and calls are rate-limited.",
+            inputSchema: {
+                name: z.string().min(1).max(200).describe("The glossary term name (e.g., 'Materiality Assessment')"),
+                definition: z.string().min(10).max(5000).describe("Full definition of the term (min 10 characters)"),
+                facets: z
+                    .object({
+                    topic: z.array(z.string()).optional().describe("Topic areas"),
+                    industry: z.array(z.string()).optional().describe("Relevant industries"),
+                    framework: z.array(z.string()).optional().describe("Related frameworks/standards"),
+                    jurisdiction: z.array(z.string()).optional().describe("Relevant jurisdictions"),
+                    stakeholder: z.array(z.string()).optional().describe("Affected stakeholder groups"),
+                    content_type: z.string().optional().describe("Content classification"),
+                })
+                    .optional()
+                    .describe("Optional metadata facets for the term"),
+            },
+            outputSchema: { proposal_id: z.string(), status: z.string() },
+            annotations: { readOnlyHint: false, destructiveHint: false },
+        }, async ({ name, definition, facets }) => {
+            try {
+                const body = { name, definition };
+                if (facets)
+                    body.facets = facets;
+                const result = await apiPost("/terms", body);
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: `Term proposal submitted: **${name}**\n\nProposal ID: ${result.proposal_id}\nStatus: ${result.status}\n\nYour proposal will be reviewed before publication.`,
+                        },
+                    ],
+                    structuredContent: { proposal_id: result.proposal_id, status: result.status },
+                };
             }
-            const result = await apiPatch(`/pages/${encodeURIComponent(recordId)}/facets`, { facets });
-            const page = result.data;
-            return {
-                content: [
-                    {
-                        type: "text",
-                        text: [
-                            `Facets updated for **${page.title}** (${page.id})`,
-                            page.updated_at ? `Updated at: ${page.updated_at}` : "",
-                            `\nNew facets:\n\`\`\`json\n${JSON.stringify(page.facets, null, 2)}\n\`\`\``,
-                        ].join("\n"),
-                    },
-                ],
-                structuredContent: {
-                    page_id: page.id,
-                    title: page.title,
-                    facets: page.facets,
-                    updated_at: page.updated_at || null,
-                },
-            };
-        }
-        catch (err) {
-            return mapWriteError(err, "Verify the page_id exists and the facets object is valid.");
-        }
-    });
-    // ── Tool: flag_content ──────────────────────────────────────────────────
-    server.registerTool("flag_content", {
-        title: "Flag Content for Curation",
-        description: "Queue one ESG Hub page for human curation — delist, remove, or review — with a reason. Nothing changes immediately: the call records a pending request and returns a `proposal_id`; the page is not modified until a curator approves it. Use it when an article is outdated, duplicated, or inaccurate; to edit its facet tags instead use tag_content. `action` controls the requested outcome: `delist` hides the page from listings, `remove` deletes it, and `review` (the default) flags it for a curator to decide. Give `page_id` as a permalink, slug, or record ID (resolved server-side) and a `reason` of at least 10 characters. Requires ESG_HUB_WRITE_TOKEN; rate-limited.",
-        inputSchema: {
-            page_id: z.string().min(1).describe("Page permalink, slug, or record ID (e.g., 'page:abc123')"),
-            reason: z.string().min(10).max(1000).describe("Why the page should be curated (min 10 characters)"),
-            action: z
-                .enum(["delist", "remove", "review"])
-                .default("review")
-                .describe("Requested outcome: delist (hide from listings), remove (delete), or review (default)"),
-        },
-        outputSchema: { proposal_id: z.string(), status: z.string() },
-        annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
-    }, async ({ page_id, reason, action }) => {
-        try {
-            // Resolve a permalink/slug to the SurrealDB record ID the API expects.
-            let recordId = page_id;
-            if (!recordId.startsWith("page:")) {
-                const page = await apiGet(`/pages/${encodeURIComponent(page_id)}`);
-                recordId = page.data.id;
+            catch (err) {
+                return mapWriteError(err, "Ensure name and definition are provided and the term doesn't already exist.");
             }
-            const result = await apiPost(`/pages/${encodeURIComponent(recordId)}/flag`, { action, reason });
-            return {
-                content: [
-                    {
-                        type: "text",
-                        text: `Curation request queued for **${recordId}**\n\nAction: ${action}\nProposal ID: ${result.proposal_id}\nStatus: ${result.status}\n\nA curator will review it before any change is made.`,
+        });
+        // ── Tool: tag_content ────────────────────────────────────────────────────
+        server.registerTool("tag_content", {
+            title: "Tag Content Facets",
+            description: "Replace the facet tags on one existing ESG Hub page: `topic`, `industry`, `framework`, `jurisdiction`, `stakeholder`, and `content_type`. The supplied `facets` object replaces the page's facet set, so any facet key you omit is cleared; the page body and title are never changed or deleted. The response echoes the page's new `facets` and `updated_at`. The array facets (`topic`, `industry`, `framework`, `jurisdiction`, `stakeholder`) each accept multiple values, while `content_type` is a single string; values are validated against the vocabulary from get_esg_metadata / list_industries, and an unrecognised value or key is rejected with 400. Give `page_id` as a permalink, slug, or record ID — permalinks are resolved to the underlying record server-side. Use it to curate tags; to read a page use get_esg_page, and to queue a removal use flag_content. Requires ESG_HUB_WRITE_TOKEN; rate-limited.",
+            inputSchema: {
+                page_id: z.string().min(1).describe("Page permalink, slug, or record ID (e.g., 'page:abc123')"),
+                facets: z
+                    .object({
+                    topic: z.array(z.string()).optional().describe("Topic classifications"),
+                    industry: z.array(z.string()).optional().describe("Relevant industry sectors"),
+                    framework: z.array(z.string()).optional().describe("Related ESG frameworks/standards"),
+                    jurisdiction: z.array(z.string()).optional().describe("Applicable jurisdictions"),
+                    stakeholder: z.array(z.string()).optional().describe("Stakeholder groups affected"),
+                    content_type: z.string().optional().describe("Content type (e.g., 'guide', 'reference')"),
+                })
+                    .describe("Facet tags to apply to the page"),
+            },
+            outputSchema: {
+                page_id: z.string(),
+                title: z.string(),
+                facets: z.record(z.string(), z.unknown()),
+                updated_at: z.string().nullable(),
+            },
+            annotations: { readOnlyHint: false, destructiveHint: false },
+        }, async ({ page_id, facets }) => {
+            try {
+                // Resolve a permalink/slug to the SurrealDB record ID the facets route requires.
+                let recordId = page_id;
+                if (!recordId.startsWith("page:")) {
+                    const page = await apiGet(`/pages/${encodeURIComponent(page_id)}`);
+                    recordId = page.data.id;
+                }
+                const result = await apiPatch(`/pages/${encodeURIComponent(recordId)}/facets`, { facets });
+                const page = result.data;
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: [
+                                `Facets updated for **${page.title}** (${page.id})`,
+                                page.updated_at ? `Updated at: ${page.updated_at}` : "",
+                                `\nNew facets:\n\`\`\`json\n${JSON.stringify(page.facets, null, 2)}\n\`\`\``,
+                            ].join("\n"),
+                        },
+                    ],
+                    structuredContent: {
+                        page_id: page.id,
+                        title: page.title,
+                        facets: page.facets,
+                        updated_at: page.updated_at || null,
                     },
-                ],
-                structuredContent: { proposal_id: result.proposal_id, status: result.status },
-            };
-        }
-        catch (err) {
-            return mapWriteError(err, "Verify the page_id exists and the reason is at least 10 characters.");
-        }
-    });
+                };
+            }
+            catch (err) {
+                return mapWriteError(err, "Verify the page_id exists and the facets object is valid.");
+            }
+        });
+        // ── Tool: flag_content ──────────────────────────────────────────────────
+        server.registerTool("flag_content", {
+            title: "Flag Content for Curation",
+            description: "Queue one ESG Hub page for human curation — delist, remove, or review — with a reason. Nothing changes immediately: the call records a pending request and returns a `proposal_id`; the page is not modified until a curator approves it. Use it when an article is outdated, duplicated, or inaccurate; to edit its facet tags instead use tag_content. `action` controls the requested outcome: `delist` hides the page from listings, `remove` deletes it, and `review` (the default) flags it for a curator to decide. Give `page_id` as a permalink, slug, or record ID (resolved server-side) and a `reason` of at least 10 characters. Requires ESG_HUB_WRITE_TOKEN; rate-limited.",
+            inputSchema: {
+                page_id: z.string().min(1).describe("Page permalink, slug, or record ID (e.g., 'page:abc123')"),
+                reason: z.string().min(10).max(1000).describe("Why the page should be curated (min 10 characters)"),
+                action: z
+                    .enum(["delist", "remove", "review"])
+                    .default("review")
+                    .describe("Requested outcome: delist (hide from listings), remove (delete), or review (default)"),
+            },
+            outputSchema: { proposal_id: z.string(), status: z.string() },
+            annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+        }, async ({ page_id, reason, action }) => {
+            try {
+                // Resolve a permalink/slug to the SurrealDB record ID the API expects.
+                let recordId = page_id;
+                if (!recordId.startsWith("page:")) {
+                    const page = await apiGet(`/pages/${encodeURIComponent(page_id)}`);
+                    recordId = page.data.id;
+                }
+                const result = await apiPost(`/pages/${encodeURIComponent(recordId)}/flag`, { action, reason });
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: `Curation request queued for **${recordId}**\n\nAction: ${action}\nProposal ID: ${result.proposal_id}\nStatus: ${result.status}\n\nA curator will review it before any change is made.`,
+                        },
+                    ],
+                    structuredContent: { proposal_id: result.proposal_id, status: result.status },
+                };
+            }
+            catch (err) {
+                return mapWriteError(err, "Verify the page_id exists and the reason is at least 10 characters.");
+            }
+        });
+    } // end write tools
     // ── Resources ───────────────────────────────────────────────────────────
     server.resource("esg-hub-api-docs", "esg-hub://api-docs", {
         description: "ESG Hub REST API documentation with endpoints, parameters, and examples",

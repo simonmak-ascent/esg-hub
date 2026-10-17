@@ -125,7 +125,7 @@ export default async function ContentPage({ params }: PageProps) {
 
   if (page === DB_ERROR) {
     return (
-      <div className="content-wrapper" id="main-content" style={{ textAlign: "center", padding: "3rem 1rem" }}>
+      <div className="content-wrapper" style={{ textAlign: "center", padding: "3rem 1rem" }}>
         <h1 style={{ borderBottom: "none", fontSize: "1.8rem" }}>
           {tPages("contentUnavailable")}
         </h1>
@@ -183,7 +183,7 @@ export default async function ContentPage({ params }: PageProps) {
   const showImage = !isHubPage && page.content.trim().length > ARTICLE_MIN_CONTENT_LENGTH;
 
   return (
-    <div id="main-content" className="layout-container">
+    <div className="layout-container">
       <Breadcrumbs permalink={page.permalink} title={page.title} locale={locale} />
       
       <div className="layout-article">

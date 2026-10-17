@@ -41,7 +41,7 @@ export default async function SearchPage({ params }: Props) {
   return (
     <Suspense
       fallback={
-        <div className="content-wrapper" id="main-content">
+        <div className="content-wrapper">
           <div style={{ textAlign: "center", padding: "3rem 0" }}>
             <h1 style={{
               fontFamily: "var(--font-heading)",

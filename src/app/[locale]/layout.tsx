@@ -115,7 +115,7 @@ export default async function LocaleLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
         <NextIntlClientProvider messages={messages}>
           <Header />
-          <main>{children}</main>
+          <main id="main-content" tabIndex={-1}>{children}</main>
           <Footer />
           <AIChatWidget />
         </NextIntlClientProvider>

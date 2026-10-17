@@ -1,10 +1,24 @@
-const WINDOW_MS = 5 * 60 * 1000;
-const MAX_REQUESTS = 50;
+const DEFAULT_WINDOW_MS = 5 * 60 * 1000;
+const DEFAULT_MAX_REQUESTS = 50;
 const CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
 
 interface Bucket {
   count: number;
   resetAt: number;
+}
+
+export interface RateLimitOptions {
+  /** Maximum requests allowed per window. Defaults to 50. */
+  max?: number;
+  /** Window length in milliseconds. Defaults to 5 minutes. */
+  windowMs?: number;
+}
+
+export interface RateLimitResult {
+  rateLimited: boolean;
+  remaining: number;
+  /** Seconds until the window resets, suitable for a Retry-After header. */
+  retryAfter: number;
 }
 
 const store = new Map<string, Bucket>();
@@ -29,29 +43,50 @@ function extractIp(request: Request): string {
   return "unknown";
 }
 
-export function checkRateLimit(request: Request): {
-  rateLimited: boolean;
-  remaining: number;
-} {
+export function checkRateLimit(
+  request: Request,
+  options: RateLimitOptions = {}
+): RateLimitResult {
+  const max = options.max ?? DEFAULT_MAX_REQUESTS;
+  const windowMs = options.windowMs ?? DEFAULT_WINDOW_MS;
   const ip = extractIp(request);
   const now = Date.now();
 
   let bucket = store.get(ip);
 
   if (!bucket || now > bucket.resetAt) {
-    bucket = { count: 0, resetAt: now + WINDOW_MS };
+    bucket = { count: 0, resetAt: now + windowMs };
+    store.set(ip, bucket);
   }
 
   bucket.count++;
 
-  if (bucket.count <= MAX_REQUESTS && bucket.count === 1) {
-    store.set(ip, bucket);
-  }
+  const rateLimited = bucket.count > max;
+  const remaining = Math.max(0, max - bucket.count);
+  const retryAfter = Math.max(1, Math.ceil((bucket.resetAt - now) / 1000));
 
-  const rateLimited = bucket.count > MAX_REQUESTS;
-  const remaining = Math.max(0, MAX_REQUESTS - bucket.count);
+  return { rateLimited, remaining, retryAfter };
+}
 
-  return { rateLimited, remaining };
+/**
+ * Drain the in-memory store. Test-only: the module keeps state between tests.
+ */
+export function resetRateLimitStore(): void {
+  store.clear();
+}
+
+export function rateLimitResponse(result: RateLimitResult): Response {
+  return new Response(
+    JSON.stringify({ error: "Too many requests", retry_after: result.retryAfter }),
+    {
+      status: 429,
+      headers: {
+        "Content-Type": "application/json",
+        "Retry-After": String(result.retryAfter),
+        "X-RateLimit-Remaining": String(result.remaining),
+      },
+    }
+  );
 }
 
 if (typeof setInterval !== "undefined") {
