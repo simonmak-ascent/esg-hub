@@ -2,18 +2,19 @@
 
 import { useCallback, useSyncExternalStore } from "react";
 
-const KEY = "apg-theme";
-const EVENT = "apg-theme-change";
+const KEY = "apf-theme";
+const LEGACY_KEY = "apg-theme";
+const EVENT = "apf-theme-change";
 
 const subscribe = (onChange: () => void) => {
   window.addEventListener(EVENT, onChange);
   return () => window.removeEventListener(EVENT, onChange);
 };
 const readTheme = (): "dark" | "light" =>
-  document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
-const serverTheme = (): "dark" | "light" => "dark";
+  document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+const serverTheme = (): "dark" | "light" => "light";
 
-/** Dark/light switch — APG parity (data-theme + localStorage["apg-theme"]). */
+/** Dark/light switch — APF tokens (data-theme + localStorage["apf-theme"]). */
 export default function ThemeToggle() {
   const theme = useSyncExternalStore(subscribe, readTheme, serverTheme);
 
@@ -22,6 +23,7 @@ export default function ThemeToggle() {
     document.documentElement.setAttribute("data-theme", next);
     try {
       localStorage.setItem(KEY, next);
+      localStorage.removeItem(LEGACY_KEY);
     } catch {
       /* storage unavailable */
     }
@@ -42,12 +44,12 @@ export default function ThemeToggle() {
         justifyContent: "center",
         width: "2.75rem",
         height: "2.75rem",
-        background: "var(--color-bg)",
-        border: "1px solid var(--color-border)",
-        borderRadius: "4px",
+        background: "transparent",
+        border: "1px solid var(--header-line)",
+        borderRadius: 0,
         cursor: "pointer",
-        color: "var(--color-text)",
-        fontSize: "0.95rem",
+        color: "var(--header-ink)",
+        fontSize: "1rem",
       }}
     >
       <span aria-hidden="true">{theme === "dark" ? "☀" : "☾"}</span>

@@ -211,7 +211,7 @@ export default async function VideosPage({ params }: Props) {
                   >
                     <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
                       <circle cx="24" cy="24" r="24" fill="rgba(0,0,0,0.6)" />
-                      <polygon points="19,14 19,34 36,24" fill="#fff" />
+                      <polygon points="19,14 19,34 36,24" fill="currentColor" />
                     </svg>
                   </div>
                 </a>

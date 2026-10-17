@@ -39,20 +39,20 @@ export default function HomeSearchBox() {
         <div
           style={{
             display: "flex",
-            border: "2px solid var(--color-border)",
-            borderRadius: "28px",
-            background: "var(--color-bg)",
+            border: "2px solid var(--apf-color-gold)",
+            borderRadius: 0,
+            background: "var(--color-bg-elevated)",
             overflow: "hidden",
             transition: "border-color 0.2s, box-shadow 0.2s",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+            boxShadow: "var(--apf-shadow-lg)",
           }}
           onFocus={(e) => {
-            (e.currentTarget as HTMLElement).style.borderColor = "var(--color-primary)";
-            (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 12px rgba(58,143,113,0.25)";
+            (e.currentTarget as HTMLElement).style.borderColor = "var(--apf-color-brand-green)";
+            (e.currentTarget as HTMLElement).style.boxShadow = "var(--apf-shadow-xl)";
           }}
           onBlur={(e) => {
-            (e.currentTarget as HTMLElement).style.borderColor = "var(--color-border)";
-            (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
+            (e.currentTarget as HTMLElement).style.borderColor = "var(--apf-color-gold)";
+            (e.currentTarget as HTMLElement).style.boxShadow = "var(--apf-shadow-lg)";
           }}
         >
           {/* Search icon */}
@@ -93,9 +93,9 @@ export default function HomeSearchBox() {
             style={{
               padding: "0.6em 1.2em",
               background: "var(--color-primary)",
-              color: "#fff",
+              color: "var(--apf-color-text-inverse)",
               border: "none",
-              borderRadius: "0 26px 26px 0",
+              borderRadius: 0,
               fontFamily: "var(--font-heading)",
               fontSize: "0.85rem",
               fontWeight: 600,
@@ -133,10 +133,10 @@ export default function HomeSearchBox() {
               fontSize: "0.78rem",
               fontFamily: "var(--font-heading)",
               fontWeight: 500,
-              color: "var(--color-link)",
+              color: "var(--apf-color-neutral-white)",
               background: "transparent",
-              border: "1px solid var(--color-border-light)",
-              borderRadius: "14px",
+              border: "1px solid color-mix(in srgb, var(--apf-color-neutral-white) 50%, transparent)",
+              borderRadius: 0,
               cursor: "pointer",
               transition: "all 0.15s",
               whiteSpace: "nowrap",

@@ -146,7 +146,7 @@ export default function PageImage({ section, title, keywords }: PageImageProps) 
             color: "rgba(255,255,255,0.6)",
             background: "rgba(0,0,0,0.4)",
             padding: "0.1em 0.4em",
-            borderRadius: "2px",
+            borderRadius: 0,
           }}
         >
           Photo via{" "}

@@ -1,0 +1,63 @@
+{
+  "comment": "Token register. planned = temporary (a phase wires it); reserved = permanent (palette/scale kept available / documentation); acceptedBypass = exact family+raw with a mandatory reason; retired = deliberately dead. The audit (scripts/audit-tokens.mjs) reports against this file.",
+  "planned": {},
+  "reserved": {
+    "primitive.color.brand.forest": {
+      "state": "reserved",
+      "reason": "palette: APF primary brand green",
+      "owner": "design-system"
+    },
+    "primitive.color.brand.green": {
+      "state": "reserved",
+      "reason": "palette: APF secondary brand green",
+      "owner": "design-system"
+    },
+    "primitive.color.brand.sprout": {
+      "state": "reserved",
+      "reason": "palette: green tint (dark-theme hover/accent)",
+      "owner": "design-system"
+    },
+    "primitive.color.brand.deep": {
+      "state": "reserved",
+      "reason": "palette: deep forest (focus/border)",
+      "owner": "design-system"
+    },
+    "primitive.color.brand.pine": {
+      "state": "reserved",
+      "reason": "palette: darkest green (chart)",
+      "owner": "design-system"
+    },
+    "primitive.color.shared.gold": {
+      "state": "reserved",
+      "reason": "shared family accent (Ascent Partners DNA)",
+      "owner": "design-system"
+    },
+    "primitive.color.shared.goldInk": {
+      "state": "reserved",
+      "reason": "gold for text on light backgrounds (WCAG AA)",
+      "owner": "design-system"
+    },
+    "primitive.color.shared.ink": {
+      "state": "reserved",
+      "reason": "shared family dark gray (footer/CTA)",
+      "owner": "design-system"
+    },
+    "primitive.color.chart.categorical": {
+      "state": "reserved",
+      "reason": "chart palette kept available",
+      "owner": "design-system"
+    },
+    "primitive.color.chart.sequential": {
+      "state": "reserved",
+      "reason": "chart palette kept available",
+      "owner": "design-system"
+    },
+    "primitive.color.chart.diverging": {
+      "state": "reserved",
+      "reason": "chart palette kept available",
+      "owner": "design-system"
+    }
+  },
+  "acceptedBypass": [],
+  "retired": []
+}

@@ -56,7 +56,7 @@ function ResultCard({ result, locale, tExternal, tSimilarity }: { result: Search
               fontSize: "0.7rem",
               fontWeight: 600,
               padding: "0.1em 0.45em",
-              borderRadius: "3px",
+              borderRadius: 0,
               background: "var(--color-bg-secondary)",
               color: "var(--color-text-muted)",
               textTransform: "uppercase",
@@ -312,7 +312,7 @@ export default function SearchClient() {
               flex: 1,
               padding: "0.6em 0.8em",
               border: "1px solid var(--color-border)",
-              borderRadius: "4px",
+              borderRadius: 0,
               fontFamily: "var(--font-heading)",
               fontSize: "1rem",
               color: "var(--color-text)",
@@ -325,9 +325,9 @@ export default function SearchClient() {
             style={{
               padding: "0.6em 1.2em",
               background: "var(--color-primary)",
-              color: "#fff",
+              color: "var(--apf-color-text-inverse)",
               border: "none",
-              borderRadius: "4px",
+              borderRadius: 0,
               fontFamily: "var(--font-heading)",
               fontSize: "0.92rem",
               fontWeight: 600,
@@ -363,7 +363,7 @@ export default function SearchClient() {
             style={{
               display: "flex",
               border: "1px solid var(--color-border)",
-              borderRadius: "4px",
+              borderRadius: 0,
               overflow: "hidden",
             }}
           >
@@ -379,7 +379,7 @@ export default function SearchClient() {
                 cursor: "pointer",
                 background:
                   mode === "keyword" ? "var(--color-primary)" : "var(--color-bg)",
-                color: mode === "keyword" ? "#fff" : "var(--color-text-secondary)",
+                color: mode === "keyword" ? "var(--apf-color-text-inverse)" : "var(--color-text-secondary)",
               }}
               aria-pressed={mode === "keyword"}
             >
@@ -399,7 +399,7 @@ export default function SearchClient() {
                 background:
                   mode === "semantic" ? "var(--color-primary)" : "var(--color-bg)",
                 color:
-                  mode === "semantic" ? "#fff" : "var(--color-text-secondary)",
+                  mode === "semantic" ? "var(--apf-color-text-inverse)" : "var(--color-text-secondary)",
               }}
               aria-pressed={mode === "semantic"}
             >
@@ -544,7 +544,7 @@ export default function SearchClient() {
             style={{
               background: "var(--color-bg-alt)",
               border: "1px solid var(--color-border-light)",
-              borderRadius: "6px",
+              borderRadius: 0,
               padding: "1.2rem 1.5rem",
               maxWidth: "600px",
               margin: "0 auto",

@@ -54,7 +54,7 @@ function ToolCard({
   paramsLabel: string;
 }) {
   return (
-    <div style={{ padding: "1.25rem", border: "1px solid var(--color-border)", borderRadius: "8px", marginBottom: "1rem", background: "var(--color-bg-secondary)" }}>
+    <div style={{ padding: "1.25rem", border: "1px solid var(--color-border)", borderRadius: 0, marginBottom: "1rem", background: "var(--color-bg-secondary)" }}>
       <h3 style={{ margin: "0 0 0.5rem", fontSize: "1rem", fontFamily: "var(--font-mono)", color: "var(--color-primary)", fontWeight: 600 }}>
         {name}
       </h3>
@@ -126,11 +126,11 @@ export default async function McpDocs() {
 }`}</CodeBlock>
             <p style={{ fontSize: "0.85rem", color: "var(--color-text-muted)", marginBottom: "1.5rem" }}>
               Configuration file location:{" "}
-              <code style={{ fontFamily: "var(--font-mono)", background: "var(--color-bg-secondary)", padding: "0.15rem 0.4rem", borderRadius: "4px" }}>
+              <code style={{ fontFamily: "var(--font-mono)", background: "var(--color-bg-secondary)", padding: "0.15rem 0.4rem", borderRadius: 0 }}>
                 ~/Library/Application Support/Claude/claude_desktop_config.json
               </code>{" "}
               (macOS) or{" "}
-              <code style={{ fontFamily: "var(--font-mono)", background: "var(--color-bg-secondary)", padding: "0.15rem 0.4rem", borderRadius: "4px" }}>
+              <code style={{ fontFamily: "var(--font-mono)", background: "var(--color-bg-secondary)", padding: "0.15rem 0.4rem", borderRadius: 0 }}>
                 %APPDATA%/Claude/claude_desktop_config.json
               </code>{" "}
               (Windows)
@@ -206,7 +206,7 @@ export default async function McpDocs() {
                     color: "var(--color-text-secondary)",
                     backgroundColor: "var(--color-surface)",
                     border: "1px solid var(--color-border)",
-                    borderRadius: "6px",
+                    borderRadius: 0,
                     lineHeight: 1.45,
                   }}
                 >

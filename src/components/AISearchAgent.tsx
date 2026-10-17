@@ -97,7 +97,7 @@ function QuickResultCard({ result }: { result: QuickResult }) {
             fontSize: "0.68rem",
             fontWeight: 600,
             padding: "0.1em 0.4em",
-            borderRadius: "3px",
+            borderRadius: 0,
             background: "var(--color-bg-secondary)",
             color: "var(--color-text-muted)",
             textTransform: "uppercase",
@@ -443,7 +443,7 @@ export default function AISearchAgent() {
               style={{
                 padding: "0.7em 1.4em",
                 background: isSearching ? "var(--color-primary-muted)" : "var(--color-primary)",
-                color: "#fff",
+                color: "var(--apf-color-text-inverse)",
                 border: "none",
                 borderRadius: "0 26px 26px 0",
                 fontFamily: "var(--font-heading)",
@@ -492,7 +492,7 @@ export default function AISearchAgent() {
                 fontSize: "0.78rem",
                 fontWeight: activeMode === "ai" ? 600 : 400,
                 border: `1px solid ${activeMode === "ai" ? "var(--color-primary)" : "var(--color-border)"}`,
-                borderRadius: "14px",
+                borderRadius: 0,
                 cursor: "pointer",
                 background: activeMode === "ai" ? "rgba(58,143,113,0.15)" : "transparent",
                 color: activeMode === "ai" ? "var(--color-primary-hover)" : "var(--color-text-muted)",
@@ -513,7 +513,7 @@ export default function AISearchAgent() {
                 fontSize: "0.78rem",
                 fontWeight: activeMode === "quick" ? 600 : 400,
                 border: `1px solid ${activeMode === "quick" ? "var(--color-primary)" : "var(--color-border)"}`,
-                borderRadius: "14px",
+                borderRadius: 0,
                 cursor: "pointer",
                 background: activeMode === "quick" ? "rgba(58,143,113,0.15)" : "transparent",
                 color: activeMode === "quick" ? "var(--color-primary-hover)" : "var(--color-text-muted)",
@@ -567,7 +567,7 @@ export default function AISearchAgent() {
                   color: "var(--color-link)",
                   background: "var(--color-bg-alt)",
                   border: "1px solid var(--color-border-light)",
-                  borderRadius: "16px",
+                  borderRadius: 0,
                   cursor: "pointer",
                   transition: "all 0.15s",
                   whiteSpace: "nowrap",
@@ -596,7 +596,7 @@ export default function AISearchAgent() {
             <div style={{
               background: "var(--color-bg-alt)",
               border: "1px solid var(--color-border-light)",
-              borderRadius: "8px",
+              borderRadius: 0,
               padding: "1.5rem",
               marginBottom: "1.5rem",
             }}>
@@ -668,7 +668,7 @@ export default function AISearchAgent() {
                       ol: ({ children }) => <ol style={{ paddingLeft: "1.4em", margin: "0.4em 0" }}>{children}</ol>,
                       li: ({ children }) => <li style={{ margin: "0.2em 0" }}>{children}</li>,
                       code: ({ children }) => (
-                        <code style={{ background: "var(--color-bg-secondary)", padding: "0.1em 0.3em", borderRadius: "2px", fontSize: "0.88em" }}>
+                        <code style={{ background: "var(--color-bg-secondary)", padding: "0.1em 0.3em", borderRadius: 0, fontSize: "0.88em" }}>
                           {children}
                         </code>
                       ),
@@ -697,7 +697,7 @@ export default function AISearchAgent() {
             <div style={{
               background: "rgba(248,113,113,0.1)",
               border: "1px solid rgba(248,113,113,0.3)",
-              borderRadius: "6px",
+              borderRadius: 0,
               padding: "0.75rem 1rem",
               marginBottom: "1rem",
               fontSize: "0.88rem",
@@ -743,7 +743,7 @@ export default function AISearchAgent() {
                     <div style={{
                       background: "var(--color-bg-alt)",
                       border: "1px solid var(--color-border-light)",
-                      borderRadius: "4px",
+                      borderRadius: 0,
                       padding: "0.7rem 0.9rem",
                       transition: "border-color 0.15s",
                       cursor: href ? "pointer" : "default",
@@ -858,7 +858,7 @@ export default function AISearchAgent() {
             <div style={{
               background: "var(--color-bg-alt)",
               border: "1px solid var(--color-border-light)",
-              borderRadius: "6px",
+              borderRadius: 0,
               padding: "1rem 1.2rem",
             }}>
               <div style={{
@@ -884,7 +884,7 @@ export default function AISearchAgent() {
             <div style={{
               background: "var(--color-bg-alt)",
               border: "1px solid var(--color-border-light)",
-              borderRadius: "6px",
+              borderRadius: 0,
               padding: "1rem 1.2rem",
             }}>
               <div style={{
@@ -912,7 +912,7 @@ export default function AISearchAgent() {
             <div style={{
               background: "var(--color-bg-alt)",
               border: "1px solid var(--color-border-light)",
-              borderRadius: "6px",
+              borderRadius: 0,
               padding: "1rem 1.2rem",
             }}>
               <div style={{
@@ -946,7 +946,7 @@ export default function AISearchAgent() {
           width: 14px;
           height: 14px;
           border: 2px solid rgba(255,255,255,0.3);
-          border-top-color: #fff;
+          border-top-color: var(--apf-color-text-inverse);
           border-radius: 50%;
           animation: spin 0.6s linear infinite;
         }

@@ -37,10 +37,10 @@ function EndpointSection({
   id?: string;
 }) {
   const methodColors: Record<string, { bg: string; color: string }> = {
-    GET: { bg: "#134e4a", color: "#6ee7b7" },
-    POST: { bg: "#1e3a5f", color: "#60a5fa" },
-    PUT: { bg: "#4a3f1e", color: "#fbbf24" },
-    DELETE: { bg: "#4a1e1e", color: "#f87171" },
+    GET: { bg: "var(--apf-color-status-success-bg)", color: "var(--apf-color-status-success)" },
+    POST: { bg: "var(--color-primary-muted)", color: "var(--apf-color-brand-forest)" },
+    PUT: { bg: "var(--apf-color-status-warning-bg)", color: "var(--apf-color-status-warning)" },
+    DELETE: { bg: "var(--apf-color-status-danger-bg)", color: "var(--apf-color-status-danger)" },
   };
   const colors = methodColors[method] || methodColors.GET;
 
@@ -53,7 +53,7 @@ function EndpointSection({
             fontSize: "0.75rem",
             fontWeight: 700,
             fontFamily: "monospace",
-            borderRadius: "4px",
+            borderRadius: 0,
             backgroundColor: colors.bg,
             color: colors.color,
           }}
@@ -89,7 +89,7 @@ function EndpointSection({
                   <td style={{ padding: "0.5rem 0.75rem", fontFamily: "var(--font-mono)", color: "var(--color-text-muted)" }}>{p.type}</td>
                   <td style={{ padding: "0.5rem 0.75rem" }}>
                     {p.required ? (
-                      <span style={{ color: "#f87171", fontWeight: 500 }}>{requiredLabel}</span>
+                      <span style={{ color: "var(--apf-color-status-danger)", fontWeight: 500 }}>{requiredLabel}</span>
                     ) : (
                       <span style={{ color: "var(--color-text-muted)" }}>{optionalLabel}</span>
                     )}
@@ -385,15 +385,15 @@ curl -s "${BASE}/api/v1/resources?type=report&limit=10"`}
               </thead>
               <tbody>
                 <tr style={{ borderBottom: "1px solid var(--color-border)" }}>
-                  <td style={{ padding: "0.5rem", fontFamily: "var(--font-mono)", color: "#f87171" }}>400</td>
+                  <td style={{ padding: "0.5rem", fontFamily: "var(--font-mono)", color: "var(--apf-color-status-danger)" }}>400</td>
                   <td style={{ padding: "0.5rem", color: "var(--color-text-secondary)" }}>{t("badRequest")}</td>
                 </tr>
                 <tr style={{ borderBottom: "1px solid var(--color-border)" }}>
-                  <td style={{ padding: "0.5rem", fontFamily: "var(--font-mono)", color: "#f87171" }}>404</td>
+                  <td style={{ padding: "0.5rem", fontFamily: "var(--font-mono)", color: "var(--apf-color-status-danger)" }}>404</td>
                   <td style={{ padding: "0.5rem", color: "var(--color-text-secondary)" }}>{t("notFound")}</td>
                 </tr>
                 <tr style={{ borderBottom: "1px solid var(--color-border)" }}>
-                  <td style={{ padding: "0.5rem", fontFamily: "var(--font-mono)", color: "#f87171" }}>500</td>
+                  <td style={{ padding: "0.5rem", fontFamily: "var(--font-mono)", color: "var(--apf-color-status-danger)" }}>500</td>
                   <td style={{ padding: "0.5rem", color: "var(--color-text-secondary)" }}>{t("serverError")}</td>
                 </tr>
               </tbody>

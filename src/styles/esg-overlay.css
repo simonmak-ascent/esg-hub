@@ -1,0 +1,54 @@
+/*
+ * ESG Hub overlay — the only local design decision on top of the vendored APF
+ * tokens (src/styles/tokens/*). It maps the ESG pillar/section taxonomy onto
+ * APF primitives so the taxonomy stays recognisable without inventing a second
+ * palette. Every value here resolves to an APF token.
+ *
+ * Accent headings are large/semibold, so WCAG AA (>=4.5:1, or >=3:1 for large
+ * text) applies; body copy always uses --apf-color-text-*.
+ */
+
+:root {
+  /* Pillars (E / S / G) */
+  --esg-pillar-e: var(--apf-color-brand-forest);
+  --esg-pillar-s: var(--apf-color-gold-ink);
+  --esg-pillar-g: var(--apf-color-brand-deep);
+
+  /* Section accents */
+  --esg-section-env: var(--apf-color-brand-forest);
+  --esg-section-social: var(--apf-color-gold-ink);
+  --esg-section-gov: var(--apf-color-brand-deep);
+  --esg-section-climate: var(--apf-color-brand-pine);
+  --esg-section-biodiversity: var(--apf-color-brand-green);
+  --esg-section-standards: var(--apf-color-ink);
+  --esg-section-regional: var(--apf-color-status-warning);
+  --esg-section-learning: var(--apf-color-status-info);
+  --esg-section-sdg: var(--apf-color-gold-ink);
+  --esg-section-ratings: var(--apf-color-text-tertiary);
+
+  /* Tinted surfaces behind the accents (4–8% brand) */
+  --esg-pillar-e-bg: color-mix(in srgb, var(--apf-color-brand-forest) 10%, var(--apf-color-surface-page));
+  --esg-pillar-s-bg: color-mix(in srgb, var(--apf-color-gold) 18%, var(--apf-color-surface-page));
+  --esg-pillar-g-bg: color-mix(in srgb, var(--apf-color-brand-deep) 10%, var(--apf-color-surface-page));
+}
+
+:root[data-theme="dark"] {
+  --esg-pillar-e: var(--apf-color-brand-sprout);
+  --esg-pillar-s: var(--apf-color-gold);
+  --esg-pillar-g: var(--apf-color-brand-green);
+
+  --esg-section-env: var(--apf-color-brand-sprout);
+  --esg-section-social: var(--apf-color-gold);
+  --esg-section-gov: var(--apf-color-brand-green);
+  --esg-section-climate: var(--apf-color-brand-sprout);
+  --esg-section-biodiversity: var(--apf-color-brand-green);
+  --esg-section-standards: var(--apf-color-text-tertiary);
+  --esg-section-regional: var(--apf-color-status-warning);
+  --esg-section-learning: var(--apf-color-status-success);
+  --esg-section-sdg: var(--apf-color-gold);
+  --esg-section-ratings: var(--apf-color-text-tertiary);
+
+  --esg-pillar-e-bg: color-mix(in srgb, var(--apf-color-brand-sprout) 16%, var(--apf-color-surface-page));
+  --esg-pillar-s-bg: color-mix(in srgb, var(--apf-color-gold) 18%, var(--apf-color-surface-page));
+  --esg-pillar-g-bg: color-mix(in srgb, var(--apf-color-brand-green) 16%, var(--apf-color-surface-page));
+}
