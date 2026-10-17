@@ -42,16 +42,17 @@ export default async function SearchPage({ params }: Props) {
     <Suspense
       fallback={
         <div className="content-wrapper">
-          <div style={{ textAlign: "center", padding: "3rem 0" }}>
-            <h1 style={{
+          <div style={{ textAlign: "center", padding: "3rem 0" }} role="status" aria-live="polite">
+            {/* The resolved search UI owns the document h1; the fallback must
+                not add a second one to the streamed HTML. */}
+            <p style={{
               fontFamily: "var(--font-heading)",
               fontSize: "2rem",
               fontWeight: 700,
-              borderBottom: "none",
               marginBottom: "0.5rem",
             }}>
               {t("title")}
-            </h1>
+            </p>
             <p style={{
               fontFamily: "var(--font-heading)",
               fontSize: "0.88rem",
