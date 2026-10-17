@@ -49,6 +49,31 @@ export function extractHeadings(markdown: string): Heading[] {
 }
 
 /**
+ * Remove a leading level-1 heading from markdown content.
+ *
+ * Page titles are rendered by the article template, so a leading `# Heading`
+ * (or `<h1>` block) in the stored body would produce a duplicate `<h1>` and
+ * break the document outline. Only the very first heading is removed; headings
+ * later in the body are left untouched.
+ *
+ * @param markdown - The markdown content
+ * @returns The content without a leading level-1 heading
+ */
+export function stripLeadingH1(markdown: string): string {
+  const atx = markdown.match(/^\s*#\s+.*(?:\r?\n|$)/);
+  if (atx) {
+    return markdown.slice(atx[0].length);
+  }
+
+  const html = markdown.match(/^\s*<h1\b[^>]*>[\s\S]*?<\/h1>(?:\r?\n)?/i);
+  if (html) {
+    return markdown.slice(html[0].length);
+  }
+
+  return markdown;
+}
+
+/**
  * Generate a URL-friendly ID from text
  * @param text - The text to convert
  * @returns URL-safe ID string

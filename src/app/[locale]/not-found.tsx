@@ -11,7 +11,6 @@ export default function NotFound() {
   return (
     <div
       className="content-wrapper"
-      id="main-content"
       style={{
         textAlign: "center",
         padding: "3rem 1rem",

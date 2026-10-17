@@ -2,9 +2,10 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <div
+    <main
       className="content-wrapper"
       id="main-content"
+      tabIndex={-1}
       style={{
         textAlign: "center",
         padding: "3rem 1rem",
@@ -58,6 +59,6 @@ export default function NotFound() {
           Search ESG Hub
         </Link>
       </div>
-    </div>
+    </main>
   );
 }

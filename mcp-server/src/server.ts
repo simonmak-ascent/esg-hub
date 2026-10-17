@@ -7,6 +7,7 @@ const WRITE_TOKEN = process.env.ESG_HUB_WRITE_TOKEN || "";
 const SERVER_NAME = "esg-hub";
 const SERVER_VERSION = "1.4.0";
 const TOOL_COUNT = 15;
+const READ_ONLY_TOOL_COUNT = 12;
 
 /**
  * Helper to call the ESG Hub REST API
@@ -192,7 +193,17 @@ const paginationSchema = z
 
 // ── Create MCP Server ──────────────────────────────────────────────────
 
-export function createMcpServer(): McpServer {
+export interface CreateMcpServerOptions {
+  /**
+   * Register only read tools. The remote HTTP transport sets this so an
+   * anonymous caller can never reach the token-backed write tools; stdio
+   * (local) use keeps the full tool set.
+   */
+  readOnly?: boolean;
+}
+
+export function createMcpServer(options: CreateMcpServerOptions = {}): McpServer {
+const toolCount = options.readOnly ? READ_ONLY_TOOL_COUNT : TOOL_COUNT;
 const server = new McpServer({
   name: SERVER_NAME,
   version: SERVER_VERSION,
@@ -229,14 +240,14 @@ server.registerTool(
       content: [
         {
           type: "text" as const,
-          text: `# ESG Hub MCP Server\n\n- Version: ${SERVER_VERSION}\n- API: ${API_BASE}\n- Tools: ${TOOL_COUNT}\n- Healthy: ${healthy}\n\nUse get_esg_metadata for knowledge-base counts and filter vocabulary.`,
+          text: `# ESG Hub MCP Server\n\n- Version: ${SERVER_VERSION}\n- API: ${API_BASE}\n- Tools: ${toolCount}\n- Healthy: ${healthy}\n\nUse get_esg_metadata for knowledge-base counts and filter vocabulary.`,
         },
       ],
       structuredContent: {
         name: SERVER_NAME,
         version: SERVER_VERSION,
         api_base: API_BASE,
-        tool_count: TOOL_COUNT,
+        tool_count: toolCount,
         healthy,
       },
     };
@@ -950,6 +961,15 @@ server.registerTool(
   }
 );
 
+// ── Write tools (stdio only) ────────────────────────────────────────────
+//
+// These call the REST write endpoints and attach the deployment's own bearer
+// token. They are not registered on the remote HTTP transport: exposing them
+// there would turn a public, unauthenticated endpoint into an anonymous write
+// API the moment ESG_HUB_WRITE_TOKEN is configured.
+
+if (!options.readOnly) {
+
 // ── Tool: propose_term ──────────────────────────────────────────────────
 
 server.registerTool(
@@ -1117,6 +1137,8 @@ server.registerTool(
     }
   }
 );
+
+} // end write tools
 
 // ── Resources ───────────────────────────────────────────────────────────
 
