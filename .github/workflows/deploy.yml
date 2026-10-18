@@ -51,13 +51,17 @@ jobs:
           SURREAL_DATABASE: ${{ secrets.SURREAL_DATABASE }}
         continue-on-error: true
 
+      # The GitHub SURREAL_* secrets are stale (signin returns InvalidAuth), while
+      # the Vercel environment has the working values. Pull the same env the deploy
+      # uses so the build renders pages against a reachable database.
+      - name: Pull Vercel environment
+        run: npx --yes vercel@latest pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
       - name: Production build
         run: pnpm build
-        env:
-          SURREAL_URL: ${{ secrets.SURREAL_URL }}
-          SURREAL_USERNAME: ${{ secrets.SURREAL_USERNAME }}
-          SURREAL_PASSWORD: ${{ secrets.SURREAL_PASSWORD }}
-          SURREAL_DATABASE: ${{ secrets.SURREAL_DATABASE }}
 
   deploy:
     runs-on: ubuntu-latest
