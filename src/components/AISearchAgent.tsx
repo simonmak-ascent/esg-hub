@@ -171,11 +171,23 @@ export default function AISearchAgent() {
     try {
       const { pipeline, env } = await import("@huggingface/transformers");
       env.allowLocalModels = false;
-      const extractor = await pipeline("feature-extraction", "Xenova/bge-small-en-v1.5", {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        dtype: "fp32" as any,
-        device: "wasm",
-      });
+
+      // Quantised weights: roughly a quarter of the fp32 download. If the
+      // repository has no quantised artifact, fall back to the default weights
+      // rather than losing semantic search entirely.
+      let extractor;
+      try {
+        extractor = await pipeline("feature-extraction", "Xenova/bge-small-en-v1.5", {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          dtype: "q8" as any,
+          device: "wasm",
+        });
+      } catch {
+        console.warn("Quantised embedding model unavailable; using default weights");
+        extractor = await pipeline("feature-extraction", "Xenova/bge-small-en-v1.5", {
+          device: "wasm",
+        });
+      }
       extractorRef.current = extractor;
       setEmbeddingReady(true);
       setEmbeddingStatus("");
@@ -186,11 +198,10 @@ export default function AISearchAgent() {
     }
   }, []);
 
-  // Start loading model on mount (in background)
-  useEffect(() => {
-    const timer = setTimeout(() => loadModel(), 2000);
-    return () => clearTimeout(timer);
-  }, [loadModel]);
+  // Deliberately not preloaded: the model used to download 2 s after mount on
+  // every /search visit (~133 MB at fp32) even when no search was run. It now
+  // loads on the first semantic search; `generateEmbedding` waits for it and the
+  // status line explains the delay.
 
   const generateEmbedding = async (text: string): Promise<number[] | null> => {
     if (!extractorRef.current) {
