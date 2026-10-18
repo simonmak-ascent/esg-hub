@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
   issues: write
+  packages: read
+
+env:
+  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   health:
@@ -24,6 +28,13 @@ jobs:
           SURREAL_USERNAME: ${{ secrets.SURREAL_USERNAME }}
           SURREAL_PASSWORD: ${{ secrets.SURREAL_PASSWORD }}
           SURREAL_DATABASE: ${{ secrets.SURREAL_DATABASE }}
+
+      - name: Production health probe
+        id: health
+        run: |
+          # Fails on a DB outage or an empty corpus, which a 200 on / hides.
+          curl -sf https://esg-hub.ascent.partners/api/health | tee /tmp/health.json
+          curl -sf -o /dev/null -w "health -> %{http_code}\n" https://esg-hub.ascent.partners/api/health
 
       - name: Production smoke checks
         id: smoke
