@@ -5,9 +5,16 @@ on:
     - cron: "13 4 * * *" # 04:13 UTC daily
   workflow_dispatch: {}
 
+permissions:
+  contents: read
+  packages: read
+
 concurrency:
   group: km-rd-loop
   cancel-in-progress: false
+
+env:
+  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   rd-loop:

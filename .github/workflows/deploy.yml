@@ -6,9 +6,10 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 env:
-  NODE_AUTH_TOKEN: ${{ secrets.SIMONMAK_ASCENT_PAT }}
+  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   check:
