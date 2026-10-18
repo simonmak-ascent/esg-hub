@@ -44,7 +44,10 @@ async function signin(): Promise<string> {
       method: "signin",
       params: [{ user: env.username, pass: env.password, NS: env.namespace }],
     }),
-    cache: "no-store",
+    // The token is cached in-process for 55 minutes; caching the signin response
+    // for the same order of magnitude keeps it out of Next's dynamic-fetch path
+    // (a `no-store` fetch here marked every statically-rendered page dynamic).
+    next: { revalidate: 300 },
   });
   const body = (await res.json().catch(() => null)) as
     | { result?: unknown; error?: { message?: string } }
