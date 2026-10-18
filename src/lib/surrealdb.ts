@@ -1,4 +1,5 @@
 import { Surreal } from "surrealdb";
+import { request as httpsRequest } from "node:https";
 
 // Credentials are sourced exclusively from environment variables.
 // Set SURREAL_URL, SURREAL_USERNAME, SURREAL_PASSWORD, and SURREAL_DATABASE in
@@ -34,25 +35,53 @@ type AuthToken = { token: string; expiresAt: number };
 let tokenCache: AuthToken | null = null;
 
 /** Sign in at namespace scope and cache the Bearer token (~55 min of a 1h TTL). */
+/**
+ * POST JSON without Next's fetch instrumentation.
+ *
+ * A `no-store` fetch inside a route marks that route dynamic, and `next.revalidate`
+ * on this POST made the build reuse an unusable cached response. Sign-in is a
+ * one-shot authentication call whose token is cached in-process for 55 minutes,
+ * so it is sent through node:https where Next cannot classify the render by it.
+ */
+function postJson(url: string, payload: unknown): Promise<{ status: number; body: string }> {
+  return new Promise((resolve, reject) => {
+    const target = new URL(url);
+    const req = httpsRequest(
+      {
+        hostname: target.hostname,
+        port: target.port || 443,
+        path: `${target.pathname}${target.search}`,
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+      },
+      (res) => {
+        let data = "";
+        res.setEncoding("utf8");
+        res.on("data", (chunk) => (data += chunk));
+        res.on("end", () => resolve({ status: res.statusCode ?? 0, body: data }));
+      }
+    );
+    req.on("error", reject);
+    req.write(JSON.stringify(payload));
+    req.end();
+  });
+}
+
 async function signin(): Promise<string> {
   const env = getEnvVars();
-  const res = await fetch(`${env.endpoint}/rpc`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({
-      id: 1,
-      method: "signin",
-      params: [{ user: env.username, pass: env.password, NS: env.namespace }],
-    }),
-    // The token is cached in-process for 55 minutes; caching the signin response
-    // for the same order of magnitude keeps it out of Next's dynamic-fetch path
-    // (a `no-store` fetch here marked every statically-rendered page dynamic).
-    next: { revalidate: 300 },
+  const res = await postJson(`${env.endpoint}/rpc`, {
+    id: 1,
+    method: "signin",
+    params: [{ user: env.username, pass: env.password, NS: env.namespace }],
   });
-  const body = (await res.json().catch(() => null)) as
-    | { result?: unknown; error?: { message?: string } }
-    | null;
-  if (!res.ok || !body || body.error || typeof body.result !== "string") {
+  const body = (() => {
+    try {
+      return JSON.parse(res.body) as { result?: unknown; error?: { message?: string } };
+    } catch {
+      return null;
+    }
+  })();
+  if (res.status < 200 || res.status >= 300 || !body || body.error || typeof body.result !== "string") {
     console.error(
       `[SurrealDB] signin failed (HTTP ${res.status}) — ns=${env.namespace}`
     );
