@@ -88,7 +88,12 @@ async function signin(): Promise<string> {
   })();
   if (res.status < 200 || res.status >= 300 || !body || body.error || typeof body.result !== "string") {
     console.error(
-      `[SurrealDB] signin failed (HTTP ${res.status}) — ns=${env.namespace}`
+      `[SurrealDB] signin failed (HTTP ${res.status}) — ns=${env.namespace}`,
+      // Redacted diagnostic: never log the token, but the RPC error text tells
+      // us whether this is a credential, payload or transport problem.
+      String(res.body ?? "")
+        .replace(/"result"\s*:\s*"[^"]*"/, '"result":"<redacted>"')
+        .slice(0, 300)
     );
     throw new Error(`SurrealDB signin failed (HTTP ${res.status})`);
   }
