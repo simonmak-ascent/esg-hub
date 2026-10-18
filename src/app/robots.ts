@@ -6,7 +6,9 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/"],
+        // /search serves user-specific result pages with no standalone content;
+        // keep it out of the index.
+        disallow: ["/api/", "/search"],
       },
     ],
     sitemap: "https://esg-hub.ascent.partners/sitemap.xml",
