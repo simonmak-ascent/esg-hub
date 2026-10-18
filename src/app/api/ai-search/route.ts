@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 export const runtime = "nodejs";
 import { queryHttpAll, sanitize } from "@/lib/surrealdb";
 import { rrfFusion, esgRerank, type RrfInput } from "@/lib/search/hybrid";
+import { buildRAGContext, languageForLocale, pageSnippet } from "@/lib/search/rag";
 import type { RankedResult } from "@/lib/search/types";
 import { checkRateLimit, rateLimitResponse } from "@/lib/middleware/rate-limit";
 import { forbiddenOriginResponse, isAllowedOrigin } from "@/lib/middleware/origin";
@@ -61,16 +62,24 @@ interface RAGSource {
 /**
  * BM25 full-text search across pages, book_chunks, and external_resources
  */
-async function bm25Search(query: string, limit: number = 8): Promise<RAGSource[]> {
+async function bm25Search(query: string, limit: number = 8, locale: string = "en"): Promise<RAGSource[]> {
   const escaped = sanitize(query.slice(0, 500));
+  const isCjk = locale === "zh" || locale === "hk";
   const results: RAGSource[] = [];
+
+  // The page FTS analyzer is ASCII/English; CJK queries use substring matching
+  // on the translated fields instead.
+  const pageWhere = isCjk
+    ? `title_zh CONTAINS '${escaped}' OR content_zh CONTAINS '${escaped}'`
+    : `title @0@ '${escaped}' OR content @1@ '${escaped}'`;
+  const pageScore = isCjk ? "1" : "search::score(0) + search::score(1)";
 
   // Run all three BM25 searches in parallel via a single multi-statement query
   const sql = `
-    SELECT id, title, permalink, description, section,
-      search::score(0) + search::score(1) AS relevance
+    SELECT id, title, permalink, description, content, section,
+      ${pageScore} AS relevance
     FROM page
-    WHERE title @0@ '${escaped}' OR content @1@ '${escaped}'
+    WHERE ${pageWhere}
     ORDER BY relevance DESC
     LIMIT ${limit};
 
@@ -99,7 +108,7 @@ async function bm25Search(query: string, limit: number = 8): Promise<RAGSource[]
           id: String(r.id),
           title: String(r.title || ""),
           permalink: r.permalink ? String(r.permalink) : undefined,
-          snippet: String(r.description || "").slice(0, 300),
+          snippet: pageSnippet(String(r.content || ""), String(r.description || "")),
           source_type: "page",
           relevance: Number(r.relevance) || 0,
           section: r.section ? String(r.section) : undefined,
@@ -155,7 +164,7 @@ async function vectorSearch(
   const results: RAGSource[] = [];
 
   const sql = `
-    SELECT id, title, permalink, description, section,
+    SELECT id, title, permalink, description, content, section,
       vector::distance::knn() AS distance
     FROM page
     WHERE embedding <|${limit}, 100|> ${embStr}
@@ -187,7 +196,7 @@ async function vectorSearch(
           id: String(r.id),
           title: String(r.title || ""),
           permalink: r.permalink ? String(r.permalink) : undefined,
-          snippet: String(r.description || "").slice(0, 300),
+          snippet: pageSnippet(String(r.content || ""), String(r.description || "")),
           source_type: "page",
           distance: Number(r.distance) || 0,
           section: r.section ? String(r.section) : undefined,
@@ -364,71 +373,17 @@ async function braveSearch(query: string, limit: number = 5): Promise<RAGSource[
   return results;
 }
 
-/**
- * Build the RAG context string from sources
- */
-function buildRAGContext(sources: RAGSource[]): string {
-  const parts: string[] = [];
-
-  const pages = sources.filter((s) => s.source_type === "page");
-  const bookChunks = sources.filter((s) => s.source_type === "book_chunk");
-  const externals = sources.filter((s) => s.source_type === "external");
-
-  if (pages.length > 0) {
-    parts.push("## ESG Hub Articles\n");
-    for (const p of pages.slice(0, 8)) {
-      parts.push(
-        `### ${p.title}${p.section ? ` [${p.section}]` : ""}\n${p.snippet}\n`
-      );
-    }
-  }
-
-  if (bookChunks.length > 0) {
-    parts.push("\n## Book Excerpts\n");
-    for (const c of bookChunks.slice(0, 6)) {
-      parts.push(`### From "${c.book_title}"\n${c.snippet}\n`);
-    }
-  }
-
-  if (externals.length > 0) {
-    parts.push("\n## External Resources\n");
-    for (const e of externals.slice(0, 4)) {
-      parts.push(
-        `### ${e.title} (${e.domain || "external"})\n${e.snippet}${e.url ? `\nSource: ${e.url}` : ""}\n`
-      );
-    }
-  }
-
-  const webResults = sources.filter((s) => s.id.startsWith("brave:"));
-  if (webResults.length > 0) {
-    parts.push("\n## Web Search Results (from authoritative ESG sources)\n");
-    for (const w of webResults.slice(0, 5)) {
-      parts.push(
-        `### ${w.title} (${w.domain})\n${w.snippet}\nURL: ${w.url}\n`
-      );
-    }
-  }
-
-  return parts.join("\n");
-}
-
 const SYSTEM_PROMPT = `You are the ESG Hub AI Search Agent, an expert assistant for Environmental, Social, and Governance (ESG) topics. You are part of ESG Hub, an open-access ESG encyclopedia by Ascent Partners Foundation.
 
-Your role is to provide accurate, well-structured answers to ESG questions using the retrieved context from the ESG Hub knowledge base. The context includes:
-- ESG Hub articles (307 pages covering all ESG topics)
-- Book excerpts from 10 ESG reference books (1,954 text chunks)
-- External authoritative resources (244 curated sources from OECD, ILO, GRI, IFRS, HKEX, EPA, etc.)
+Your role is to answer ESG questions from the numbered context supplied in the user message, which contains ESG Hub articles, book excerpts, curated external resources, and scoped web results.
 
-Guidelines:
-1. **Ground your answers in the provided context.** Cite specific sources when possible.
-2. **Be comprehensive but concise.** Aim for 200-500 words.
-3. **Use markdown formatting** for readability (headers, bold, lists, etc.).
-4. **Reference ESG Hub pages** by suggesting the user explore relevant sections (e.g., "See the ESG Hub article on [topic]").
-5. **Reference books** when book excerpts are relevant (e.g., "According to 'Carbon Credits Made Simple'...").
-6. **Acknowledge uncertainty** if the context doesn't fully cover the question.
-7. **Cover key frameworks** (GRI, IFRS S1/S2, TCFD, TNFD, SASB, ESRS/CSRD) when relevant.
-8. **Be balanced** and acknowledge different perspectives on debated ESG topics.
-9. At the end, suggest 2-3 related ESG Hub topics the user might want to explore.`;
+Grounding rules (these override style preferences):
+1. **Every factual claim must come from the supplied context.** Cite the numbered source inline as [1], [2] immediately after the claim.
+2. **Never invent a citation.** Only cite numbers that appear in the context, and do not present an uncited claim as fact.
+3. **If the context does not answer the question, say what is missing** and suggest which ESG Hub section might cover it. Do not substitute general knowledge for knowledge-base evidence.
+4. **Answer in the user's language**, which the user message states.
+5. Be comprehensive but concise (200-500 words), use markdown, and acknowledge uncertainty explicitly.
+6. At the end, suggest 2-3 related ESG Hub topics the user might explore.`;
 
 
 const CORS_HEADERS = {
@@ -454,6 +409,8 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const { query, embedding, mode = "deep" } = body;
+    const localeParam = typeof body?.locale === "string" ? body.locale : "en";
+    const locale = ["en", "zh", "hk"].includes(localeParam) ? localeParam : "en";
 
     if (!query || typeof query !== "string" || query.trim().length === 0) {
       return new Response(
@@ -486,7 +443,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Step 1: Retrieve context from SurrealDB (BM25 + vector) + Brave Search
-    const bm25Promise = bm25Search(query.trim(), mode === "quick" ? 5 : 8);
+    const bm25Promise = bm25Search(query.trim(), mode === "quick" ? 5 : 8, locale);
     const vectorPromise =
       embedding && Array.isArray(embedding) && embedding.length === 384
         ? vectorSearch(embedding, mode === "quick" ? 5 : 8)
@@ -516,7 +473,7 @@ export async function POST(req: NextRequest) {
         existingUrls.add(br.url);
       }
     }
-    const ragContext = buildRAGContext(mergedSources);
+    const { text: ragContext, citations } = buildRAGContext(mergedSources);
 
     // Prepare sources for the client (without full snippets for bandwidth)
     const clientSources = mergedSources.map((s) => ({
@@ -529,12 +486,19 @@ export async function POST(req: NextRequest) {
       domain: s.domain,
       section: s.section,
       snippet: s.snippet.slice(0, 150),
+      citation: citations.get(s.id),
     }));
 
-    // Deduplicate client sources by title
-    const uniqueSources = Array.from(
-      new Map(clientSources.map((s) => [s.title, s])).values()
-    ).slice(0, 12);
+    // Deduplicate by title, keeping the first (lowest) citation number so the
+    // displayed order still matches the inline citations in the answer.
+    const seenTitles = new Set<string>();
+    const uniqueSources = clientSources
+      .filter((s) => {
+        if (seenTitles.has(s.title)) return false;
+        seenTitles.add(s.title);
+        return true;
+      })
+      .slice(0, 12);
 
     // Step 2: Stream AI response with RAG context
     const encoder = new TextEncoder();
@@ -547,10 +511,23 @@ export async function POST(req: NextRequest) {
           )
         );
 
+        // No retrieval at all: do not ask the model to answer from memory and
+        // present it as a knowledge-base answer.
+        if (!ragContext) {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: "no_evidence" })}\n\n`)
+          );
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: "done", grounded: false })}\n\n`)
+          );
+          controller.close();
+          return;
+        }
+
+        const languageName = languageForLocale(locale);
+
         // Build the prompt
-        const userPrompt = ragContext
-          ? `Based on the following ESG Hub knowledge base context, answer the user's question.\n\n---\n${ragContext}\n---\n\nUser Question: ${query.trim()}`
-          : `Answer the following ESG question based on your knowledge:\n\n${query.trim()}`;
+        const userPrompt = `Answer the question using only the numbered context below. Cite sources inline as [n]. If the context is insufficient, say what is missing instead of guessing.\n\n---\n${ragContext}\n---\n\nUser question (answer in ${languageName}): ${query.trim()}`;
 
         try {
           const response = await fetch(apiUrl, {
@@ -578,6 +555,9 @@ export async function POST(req: NextRequest) {
               encoder.encode(
                 `data: ${JSON.stringify({ type: "error", data: "AI service temporarily unavailable" })}\n\n`
               )
+            );
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ type: "done", partial: true })}\n\n`)
             );
             controller.close();
             return;
@@ -638,6 +618,9 @@ export async function POST(req: NextRequest) {
             encoder.encode(
               `data: ${JSON.stringify({ type: "error", data: "An error occurred while generating the answer" })}\n\n`
             )
+          );
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: "done", partial: true })}\n\n`)
           );
         }
 
