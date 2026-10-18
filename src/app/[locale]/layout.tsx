@@ -111,7 +111,9 @@ export default async function LocaleLayout({
     notFound();
   }
 
-  const messages = await getMessages();
+  // Pass the locale explicitly: without it next-intl resolves the locale from
+  // request headers, which opts every page out of static rendering.
+  const messages = await getMessages({ locale });
 
   return (
     <html lang={locale === "zh" ? "zh-Hans" : locale === "hk" ? "zh-Hant-HK" : "en-GB"} data-theme="light" className={fontVariables}>
