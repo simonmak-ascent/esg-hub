@@ -24,9 +24,9 @@ describe("toWordBoundaryLiteral", () => {
 });
 
 describe("wordBoundaryWhere", () => {
-  it("builds a case-insensitive boundary predicate", () => {
+  it("pads both sides so only whole words match", () => {
     expect(wordBoundaryWhere("name_en", "gri")).toBe(
-      "string::matches(name_en, '(?i)\\bgri\\b')"
+      "(' ' + string::lowercase(name_en) + ' ') CONTAINS ' gri '"
     );
   });
 
