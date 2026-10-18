@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { getPageByPermalink } from "@/lib/pages";
+import { getPageByPermalink, CONTENT_REVALIDATE } from "@/lib/pages";
 import { queryHttp } from "@/lib/surrealdb";
 import MarkdownContent from "@/components/MarkdownContent";
 import Link from "next/link";
@@ -100,7 +100,9 @@ export default async function BooksPage({ params }: Props) {
   let books: Book[] = [];
   try {
     books = await queryHttp<Book>(
-      "SELECT slug, title, author, category, description, pdf_url, cover_url, pdf_size FROM book ORDER BY category, title;"
+      "SELECT slug, title, author, category, description, pdf_url, cover_url, pdf_size FROM book ORDER BY category, title;",
+      undefined,
+      { revalidate: CONTENT_REVALIDATE }
     );
   } catch (err) {
     console.error("[BooksPage] Failed to fetch books:", err);

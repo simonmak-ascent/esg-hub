@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import Image from "next/image";
 import { queryHttp } from "@/lib/surrealdb";
-import { getPageByPermalink } from "@/lib/pages";
+import { getPageByPermalink, CONTENT_REVALIDATE } from "@/lib/pages";
 import MarkdownContent from "@/components/MarkdownContent";
 
 interface Props {
@@ -128,7 +128,9 @@ async function getVideoReferencingPages(): Promise<
       permalink: string;
       section: string | null;
     }>(
-      `SELECT title, permalink, section FROM page WHERE (content CONTAINS 'youtube.com' OR content CONTAINS 'youtu.be' OR content CONTAINS 'video-embed') AND permalink != '/videos/' AND permalink != '/learning/videos/' ORDER BY section ASC, title ASC LIMIT 50;`
+      `SELECT title, permalink, section FROM page WHERE (content CONTAINS 'youtube.com' OR content CONTAINS 'youtu.be' OR content CONTAINS 'video-embed') AND permalink != '/videos/' AND permalink != '/learning/videos/' ORDER BY section ASC, title ASC LIMIT 50;`,
+      undefined,
+      { revalidate: CONTENT_REVALIDATE }
     );
   } catch {
     return [];

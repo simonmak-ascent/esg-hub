@@ -1,5 +1,12 @@
 import { queryHttp } from "./surrealdb";
 
+/**
+ * Pages revalidate every five minutes; their DB reads use the same window so a
+ * render does not touch the database on every revalidation.
+ */
+export const CONTENT_REVALIDATE = 300;
+const CONTENT_CACHE = { revalidate: CONTENT_REVALIDATE };
+
 export interface Page {
   id: string;
   slug: string;
@@ -123,7 +130,8 @@ export async function getPageByPermalink(
   try {
     const results = await queryHttp<Page>(
       `SELECT * FROM page WHERE permalink = $permalink LIMIT 1;`,
-      { permalink: normalized }
+      { permalink: normalized },
+      CONTENT_CACHE
     );
 
     if (results.length === 0) return null;
@@ -159,7 +167,8 @@ export async function getPagesBySection(section: string, locale?: string): Promi
   try {
     const pages = await queryHttp<Page>(
       `SELECT * FROM page WHERE section = $section ORDER BY title ASC;`,
-      { section }
+      { section },
+      CONTENT_CACHE
     );
     
     if (locale && locale !== "en") {
@@ -183,7 +192,9 @@ export async function getAllPages(): Promise<Page[]> {
 
   try {
     return queryHttp<Page>(
-      `SELECT id, slug, title, permalink, section, subsection, pillar, parent, redirect_to, updated_at FROM page ORDER BY section ASC, title ASC;`
+      `SELECT id, slug, title, permalink, section, subsection, pillar, parent, redirect_to, updated_at FROM page ORDER BY section ASC, title ASC;`,
+      undefined,
+      CONTENT_CACHE
     );
   } catch (error) {
     console.error("[pages] Error fetching all pages:", error);
@@ -203,7 +214,8 @@ export async function searchPages(query: string, locale?: string): Promise<Local
   try {
     const pages = await queryHttp<Page>(
       `SELECT *, search::score(0) + search::score(1) AS relevance FROM page WHERE title @0@ $query OR content @1@ $query ORDER BY relevance DESC LIMIT 50;`,
-      { query }
+      { query },
+      CONTENT_CACHE
     );
     
     if (locale && locale !== "en") {
@@ -234,12 +246,14 @@ export async function getChildPages(
     if (subsection) {
       pages = await queryHttp<Page>(
         `SELECT * FROM page WHERE section = $section AND subsection = $subsection AND slug != $subsection ORDER BY title ASC;`,
-        { section, subsection }
+        { section, subsection },
+        CONTENT_CACHE
       );
     } else {
       pages = await queryHttp<Page>(
         `SELECT * FROM page WHERE section = $section AND subsection IS NONE ORDER BY title ASC;`,
-        { section }
+        { section },
+        CONTENT_CACHE
       );
     }
     
