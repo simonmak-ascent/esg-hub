@@ -10,12 +10,13 @@ export interface SearchResult {
   table: string;
   title: string;
   permalink?: string;
+  url?: string;
   description?: string;
   section?: string;
   domain?: string;
   relevance?: number;
   facets?: Record<string, string | string[]>;
-  source_type?: "pages" | "external";
+  source_type?: "page" | "external";
 }
 
 export interface HybridSearchResponse {

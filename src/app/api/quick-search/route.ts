@@ -37,6 +37,9 @@ export async function GET(request: NextRequest) {
   try {
     const q = request.nextUrl.searchParams.get("q");
     const limitParam = request.nextUrl.searchParams.get("limit");
+    const localeParam = request.nextUrl.searchParams.get("locale") || "en";
+    const locale = ["en", "zh", "hk"].includes(localeParam) ? localeParam : "en";
+    const isCjk = locale === "zh" || locale === "hk";
 
     if (!q || typeof q !== "string" || q.trim().length === 0) {
       return NextResponse.json(
@@ -48,11 +51,20 @@ export async function GET(request: NextRequest) {
     const limit = Math.max(1, Math.min(parseInt(limitParam || "8", 10) || 8, 20));
     const escaped = sanitize(q.trim().slice(0, 500));
 
+    // The page FTS analyzer is ASCII/English, so CJK queries use substring
+    // matching on the translated fields instead of the `@n@` match operator.
+    const pageWhere = isCjk
+      ? `title_zh CONTAINS '${escaped}' OR content_zh CONTAINS '${escaped}'`
+      : `title @0@ '${escaped}' OR content @1@ '${escaped}'`;
+    const pageScore = isCjk
+      ? `(IF title_zh CONTAINS '${escaped}' THEN 10 ELSE 1 END)`
+      : `search::score(0) + search::score(1)`;
+
     const sql = `
-      SELECT id, title, permalink, description, section,
-        search::score(0) + search::score(1) AS relevance
+      SELECT id, title, title_zh, permalink, description, description_zh, section,
+        ${pageScore} AS relevance
       FROM page
-      WHERE title @0@ '${escaped}' OR content @1@ '${escaped}'
+      WHERE ${pageWhere}
       ORDER BY relevance DESC
       LIMIT ${limit};
 
@@ -70,11 +82,13 @@ export async function GET(request: NextRequest) {
     // Pages
     if (allResults[0]?.status === "OK" && Array.isArray(allResults[0].result)) {
       for (const r of allResults[0].result as Array<Record<string, unknown>>) {
+        const localizedTitle = isCjk && r.title_zh ? String(r.title_zh) : String(r.title || "");
+        const localizedDescription = isCjk && r.description_zh ? String(r.description_zh) : String(r.description || "");
         results.push({
           id: String(r.id),
-          title: String(r.title || ""),
+          title: localizedTitle,
           permalink: r.permalink ? String(r.permalink) : undefined,
-          snippet: String(r.description || "").slice(0, 200),
+          snippet: localizedDescription.slice(0, 200),
           source_type: "page",
           section: r.section ? String(r.section) : undefined,
           relevance: Number(r.relevance) || 0,

@@ -249,6 +249,7 @@ export default function AISearchAgent() {
           query: q,
           embedding: embedding || undefined,
           mode: "deep",
+          locale,
         }),
         signal: controller.signal,
       });
@@ -323,7 +324,7 @@ export default function AISearchAgent() {
     router.replace(`/${locale}/search?q=${encodeURIComponent(q)}&mode=quick`, { scroll: false });
 
     try {
-      const res = await fetch(`/api/quick-search?q=${encodeURIComponent(q)}&limit=15`);
+      const res = await fetch(`/api/quick-search?q=${encodeURIComponent(q)}&limit=15&locale=${locale}`);
       const data = await res.json();
       setQuickResults(data.results || []);
     } catch {

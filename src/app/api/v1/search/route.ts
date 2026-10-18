@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs";
 import { keywordSearch } from "@/lib/search";
 import { queryHttp, queryHttpAll, sanitize, sanitizeInt } from "@/lib/surrealdb";
-import { fuseRerankAndRespond, type RrfInput } from "@/lib/search/hybrid";
+import { fuseListsAndRespond, type RrfInput } from "@/lib/search/hybrid";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -61,11 +61,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const localeParam = params.get("locale") || "en";
+    const locale = ["en", "zh", "hk"].includes(localeParam) ? localeParam : "en";
+    const isCjk = locale === "zh" || locale === "hk";
+
     // =========================================================================
-    // mode=keyword — existing behaviour preserved unchanged
+    // mode=keyword — BM25 across pages and external resources
     // =========================================================================
     if (mode === "keyword") {
-      const results = await keywordSearch(q);
+      const offset = sanitizeInt(params.get("offset"), 0, 0, 10000);
+      const results = await keywordSearch(q, locale);
 
       let filtered = results;
       if (source === "pages") {
@@ -74,11 +79,19 @@ export async function GET(request: NextRequest) {
         filtered = results.filter(r => r.source_type === "external");
       }
 
+      const page = filtered.slice(offset, offset + limit);
+
       return NextResponse.json({
         query: q,
         mode: "keyword",
-        data: filtered.slice(0, limit),
+        data: page,
         total: filtered.length,
+        pagination: {
+          total: filtered.length,
+          offset,
+          limit,
+          has_more: offset + page.length < filtered.length,
+        },
       }, { headers: CORS_HEADERS });
     }
 
@@ -103,175 +116,172 @@ export async function GET(request: NextRequest) {
     }
 
     const escaped = sanitize(q.slice(0, 500));
+    const lowerEscaped = sanitize(q.slice(0, 500).toLowerCase());
 
-    // ----- Table definitions for BM25 queries -----
+    // ----- Table definitions -----
+    // `where` + `score` must use match references that exist as FULLTEXT
+    // indexes; reusing one reference across several fields made localized
+    // matches score zero. Tables without a FULLTEXT index use a substring
+    // match so they remain searchable instead of erroring silently.
     interface TableDef {
       name: string;
       select: string;
-      ftsWhere: string;
+      where: string;
+      score: string;
       limit: number;
+      sourceType: "page" | "external";
     }
 
     const allTableDefs: TableDef[] = [
       {
         name: "page",
         select: "id, title, permalink, description, section, updated_at",
-        ftsWhere: `title @0@ '${escaped}' OR content @1@ '${escaped}'`,
+        where: `title @0@ '${escaped}' OR content @1@ '${escaped}' OR title_zh @2@ '${escaped}' OR content_zh @3@ '${escaped}' OR title_hi @4@ '${escaped}' OR content_hi @5@ '${escaped}'`,
+        score: "search::score(0) + search::score(1) + search::score(2) + search::score(3) + search::score(4) + search::score(5)",
         limit: 10,
+        sourceType: "page",
       },
       {
         name: "term",
-        select: "id, name AS title, definition AS description, updated_at",
-        ftsWhere: `term @0@ '${escaped}' OR definition @1@ '${escaped}'`,
+        select: "id, name AS title, definition AS description, permalink, updated_at",
+        where: `name @0@ '${escaped}' OR definition @1@ '${escaped}'`,
+        score: "search::score(0) + search::score(1)",
         limit: 5,
+        sourceType: "page",
       },
       {
         name: "framework",
-        select: "id, name AS title, description, updated_at",
-        ftsWhere: `name @0@ '${escaped}' OR description @1@ '${escaped}'`,
+        select: "id, name AS title, description, permalink, updated_at",
+        where: `name @0@ '${escaped}' OR description @1@ '${escaped}'`,
+        score: "search::score(0) + search::score(1)",
         limit: 5,
+        sourceType: "page",
       },
       {
         name: "industries",
-        select: "id, name_en AS title, updated_at",
-        ftsWhere: `name @0@ '${escaped}' OR description @1@ '${escaped}'`,
+        select: "id, name_en AS title, sector_id AS section, updated_at",
+        where: `string::lowercase(name_en) CONTAINS '${lowerEscaped}'`,
+        score: "1",
         limit: 5,
+        sourceType: "page",
       },
       {
         name: "entity",
-        select: "id, name AS title, description, updated_at",
-        ftsWhere: `name @0@ '${escaped}' OR description @1@ '${escaped}'`,
+        select: "id, name AS title, entity_type AS section, permalink, updated_at",
+        where: `string::lowercase(name) CONTAINS '${lowerEscaped}'`,
+        score: "1",
         limit: 5,
+        sourceType: "page",
       },
       {
         name: "external_resource",
         select: "id, title, url, domain AS source_domain, description, updated_at",
-        ftsWhere: `title @0@ '${escaped}' OR content @1@ '${escaped}'`,
+        where: `title @0@ '${escaped}' OR content @1@ '${escaped}'`,
+        score: "search::score(0) + search::score(1)",
         limit: 5,
+        sourceType: "external",
       },
     ];
 
-    // Filter tables by source
     const bm25TableDefs = source === "external"
       ? allTableDefs.filter(t => t.name === "external_resource")
       : source === "pages"
         ? allTableDefs.filter(t => t.name !== "external_resource")
         : allTableDefs;
 
-    // Populate "external" vs "pages" source_type per table
-    const externalTables = new Set(["external_resource"]);
-
-    // ----- Build BM25 + HNSW SQL -----
+    // ----- Build one ranked list per statement -----
+    const statements: Array<{ def: TableDef; kind: "bm25" | "hnsw" | "zh" }> = [];
     const sqlParts: string[] = [];
 
-    // BM25 queries
     for (const t of bm25TableDefs) {
       sqlParts.push(
-        `SELECT ${t.select}, search::score(0) + search::score(1) AS relevance FROM ${t.name} WHERE ${t.ftsWhere} ORDER BY relevance DESC LIMIT ${t.limit};`
+        `SELECT ${t.select}, ${t.score} AS relevance FROM ${t.name} WHERE ${t.where} ORDER BY relevance DESC LIMIT ${t.limit};`
       );
+      statements.push({ def: t, kind: "bm25" });
     }
 
-    // HNSW queries (only if embedding provided)
-    const hnswQueries: string[] = [];
     if (embedding) {
       const embStr = "[" + embedding.map(v => v.toFixed(8)).join(",") + "]";
       for (const t of bm25TableDefs) {
-        const hnswSql = `SELECT ${t.select}, vector::distance::knn() AS distance FROM ${t.name} WHERE embedding <|${t.limit},100|> ${embStr} ORDER BY distance LIMIT ${t.limit};`;
-        sqlParts.push(hnswSql);
-        hnswQueries.push(hnswSql);
+        sqlParts.push(
+          `SELECT ${t.select}, vector::distance::knn() AS distance FROM ${t.name} WHERE embedding <|${t.limit},100|> ${embStr} ORDER BY distance LIMIT ${t.limit};`
+        );
+        statements.push({ def: t, kind: "hnsw" });
       }
+    }
+
+    // CJK substring retriever: the page FTS analyzer is ASCII/English, so
+    // Chinese matches never surface through `@0@`-style match operators.
+    if (isCjk && source !== "external") {
+      const zhDef: TableDef = {
+        name: "page",
+        select: "id, title, permalink, description, section, updated_at",
+        where: `title_zh CONTAINS '${escaped}' OR content_zh CONTAINS '${escaped}'`,
+        score: `(IF title_zh CONTAINS '${escaped}' THEN 10 ELSE 1 END)`,
+        limit: 10,
+        sourceType: "page",
+      };
+      sqlParts.push(
+        `SELECT ${zhDef.select}, ${zhDef.score} AS relevance FROM page WHERE ${zhDef.where} ORDER BY relevance DESC LIMIT ${zhDef.limit};`
+      );
+      statements.push({ def: zhDef, kind: "zh" });
     }
 
     // Single round-trip via queryHttpAll
     const allQueryResults = await queryHttpAll<Record<string, unknown>>(sqlParts.join("\n"));
 
-    // ----- Process BM25 results -----
-    const bm25Inputs: RrfInput[] = [];
+    // ----- Collect one ranked list per statement -----
+    const lists: RrfInput[][] = [];
     const docMetadata = new Map<string, {
       title: string;
       permalink?: string;
+      url?: string;
       description?: string;
       section?: string;
       domain?: string;
-      source_type?: "pages" | "external";
+      source_type?: "page" | "external";
     }>();
-
-    for (let i = 0; i < bm25TableDefs.length; i++) {
-      const tableDef = bm25TableDefs[i];
-      const result = allQueryResults[i];
-      const sourceType: "pages" | "external" = externalTables.has(tableDef.name) ? "external" : "pages";
-
-      if (result?.status === "OK" && Array.isArray(result.result)) {
-        for (const r of result.result as Array<Record<string, unknown>>) {
-          const id = String(r.id);
-          const score = Number(r.relevance) || 0;
-          bm25Inputs.push({ id, table: tableDef.name, score });
-
-          const key = `${tableDef.name}:${id}`;
-          if (!docMetadata.has(key)) {
-            docMetadata.set(key, {
-              title: String(r.title || ""),
-              permalink: r.permalink ? String(r.permalink) : undefined,
-              description: r.description ? String(r.description) : undefined,
-              section: r.section ? String(r.section) : undefined,
-              domain: r.source_domain ? String(r.source_domain) : r.domain ? String(r.domain) : undefined,
-              source_type: sourceType,
-            });
-          }
-        }
-      }
-    }
-
-    // ----- Process HNSW results -----
-    const hnswInputs: RrfInput[] = [];
-    const docEmbeddingsMap = new Map<string, number[]>();
-
-    if (embedding) {
-      const hnswStartIdx = bm25TableDefs.length;
-      for (let j = 0; j < bm25TableDefs.length; j++) {
-        const tableDef = bm25TableDefs[j];
-        const result = allQueryResults[hnswStartIdx + j];
-        const sourceType: "pages" | "external" = externalTables.has(tableDef.name) ? "external" : "pages";
-
-        if (result?.status === "OK" && Array.isArray(result.result)) {
-          for (const r of result.result as Array<Record<string, unknown>>) {
-            const id = String(r.id);
-            const distance = Number(r.distance) || 0;
-            const score = 1 - distance;
-            hnswInputs.push({ id, table: tableDef.name, score });
-
-            const key = `${tableDef.name}:${id}`;
-            if (!docMetadata.has(key)) {
-              docMetadata.set(key, {
-                title: String(r.title || ""),
-                permalink: r.permalink ? String(r.permalink) : undefined,
-                description: r.description ? String(r.description) : undefined,
-                section: r.section ? String(r.section) : undefined,
-                domain: r.source_domain ? String(r.source_domain) : r.domain ? String(r.domain) : undefined,
-                source_type: sourceType,
-              });
-            }
-          }
-        }
-      }
-    }
-
-    // ----- Build updated_at map from metadata -----
     const docUpdatedAt = new Map<string, Date>();
-    for (let i = 0; i < bm25TableDefs.length; i++) {
-      const tableDef = bm25TableDefs[i];
+
+    for (let i = 0; i < statements.length; i++) {
+      const { def, kind } = statements[i];
       const result = allQueryResults[i];
-      if (result?.status === "OK" && Array.isArray(result.result)) {
-        for (const r of result.result as Array<Record<string, unknown>>) {
-          const key = `${tableDef.name}:${String(r.id)}`;
-          if (r.updated_at) {
-            const d = new Date(String(r.updated_at));
-            if (!isNaN(d.getTime())) {
-              docUpdatedAt.set(key, d);
-            }
+
+      if (result?.status !== "OK" || !Array.isArray(result.result)) {
+        console.warn(`[v1/search] ${def.name} (${kind}) query failed: ${result?.status ?? "no result"}`);
+        continue;
+      }
+
+      const list: RrfInput[] = [];
+      for (const r of result.result as Array<Record<string, unknown>>) {
+        const id = String(r.id);
+        const key = `${def.name}:${id}`;
+        const score = kind === "hnsw" ? 1 - (Number(r.distance) || 0) : Number(r.relevance) || 0;
+
+        list.push({ id, table: def.name, score });
+
+        if (!docMetadata.has(key)) {
+          const domain = r.source_domain ?? r.domain;
+          docMetadata.set(key, {
+            title: String(r.title || ""),
+            permalink: r.permalink ? String(r.permalink) : undefined,
+            url: r.url ? String(r.url) : undefined,
+            description: r.description ? String(r.description) : undefined,
+            section: r.section ? String(r.section) : undefined,
+            domain: domain ? String(domain) : undefined,
+            source_type: def.sourceType,
+          });
+        }
+
+        if (r.updated_at) {
+          const updated = new Date(String(r.updated_at));
+          if (!isNaN(updated.getTime())) {
+            docUpdatedAt.set(key, updated);
           }
         }
       }
+
+      if (list.length) lists.push(list);
     }
 
     // Default authority scores per table
@@ -290,13 +300,13 @@ export async function GET(request: NextRequest) {
     }
 
     // ----- Fuse, re-rank, paginate -----
-    const response = fuseRerankAndRespond(bm25Inputs, hnswInputs, {
+    const response = fuseListsAndRespond(lists, {
       limit: hybridLimit,
       offset,
       queryEmbedding: embedding,
       docAuthority,
       docUpdatedAt,
-      docEmbeddings: docEmbeddingsMap,
+      docEmbeddings: new Map(),
       docMetadata,
     });
 

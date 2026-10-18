@@ -31,12 +31,17 @@ function resolveLocalizedContent<
 /**
  * Full-text keyword search using BM25 ranking.
  * Input is sanitized to prevent SurrealQL injection.
+ *
+ * Localized fields use distinct match references: reusing `@0@`/`@1@` across
+ * six fields made a row that matched only in `title_zh` sum to zero, so it
+ * ranked last instead of first.
  */
 export async function keywordSearch(query: string, locale?: string): Promise<SearchResult[]> {
   // Truncate excessively long queries
   const trimmed = query.slice(0, 500);
   const escaped = sanitize(trimmed);
-  
+  const isCjk = locale === "zh" || locale === "hk";
+
   // Search pages (include localized fields)
   const pageResults = await queryHttp<{
     id: string;
@@ -50,12 +55,12 @@ export async function keywordSearch(query: string, locale?: string): Promise<Sea
     section: string | null;
     relevance: number;
   }>(
-    `SELECT id, title, title_zh, title_hi, permalink, description, description_zh, description_hi, section, 
-      search::score(0) + search::score(1) AS relevance 
-    FROM page 
-    WHERE title @0@ '${escaped}' OR content @1@ '${escaped}' OR title_zh @0@ '${escaped}' OR title_hi @0@ '${escaped}' OR content_zh @1@ '${escaped}' OR content_hi @1@ '${escaped}'
-    ORDER BY relevance DESC 
-    LIMIT 30;`
+    `SELECT id, title, title_zh, title_hi, permalink, description, description_zh, section,
+      search::score(0) + search::score(1) + search::score(2) + search::score(3) + search::score(4) + search::score(5) AS relevance
+    FROM page
+    WHERE title @0@ '${escaped}' OR content @1@ '${escaped}' OR title_zh @2@ '${escaped}' OR content_zh @3@ '${escaped}' OR title_hi @4@ '${escaped}' OR content_hi @5@ '${escaped}'
+    ORDER BY relevance DESC
+    LIMIT 50;`
   );
 
   // Search external resources
@@ -63,10 +68,11 @@ export async function keywordSearch(query: string, locale?: string): Promise<Sea
     id: string;
     title: string;
     url: string;
-    source_domain: string;
+    source_domain: string | null;
+    description: string | null;
     relevance: number;
   }>(
-    `SELECT id, title, url, source_domain,
+    `SELECT id, title, url, domain AS source_domain, description,
       search::score(0) + search::score(1) AS relevance
     FROM external_resource
     WHERE title @0@ '${escaped}' OR content @1@ '${escaped}'
@@ -74,9 +80,29 @@ export async function keywordSearch(query: string, locale?: string): Promise<Sea
     LIMIT 20;`
   );
 
-  const results: SearchResult[] = [];
+  // The page FTS analyzer is ASCII/English; CJK text is not tokenized. For
+  // zh/hk, substring matching is the reliable path (354 rows, cheap).
+  let zhResults: typeof pageResults = [];
+  if (isCjk) {
+    zhResults = await queryHttp<(typeof pageResults)[number]>(
+      `SELECT id, title, title_zh, title_hi, permalink, description, description_zh, section,
+        (IF title_zh CONTAINS '${escaped}' THEN 10 ELSE 1 END) AS relevance
+      FROM page
+      WHERE title_zh CONTAINS '${escaped}' OR content_zh CONTAINS '${escaped}'
+      ORDER BY relevance DESC
+      LIMIT 50;`
+    );
+  }
 
-  for (const r of pageResults) {
+  const results: SearchResult[] = [];
+  const seen = new Set<string>();
+
+  for (const r of [...zhResults, ...pageResults]) {
+    const relevance = Number(r.relevance) || 0;
+    if (relevance <= 0) continue;
+    if (seen.has(r.id)) continue;
+    seen.add(r.id);
+
     const localized = resolveLocalizedContent(r, locale || "en");
     results.push({
       id: r.id,
@@ -84,25 +110,28 @@ export async function keywordSearch(query: string, locale?: string): Promise<Sea
       permalink: r.permalink,
       description: localized.description,
       section: r.section || undefined,
-      relevance: r.relevance,
+      relevance,
       source_type: "page",
     });
   }
 
   for (const r of extResults) {
+    const relevance = Number(r.relevance) || 0;
+    if (relevance <= 0) continue;
     results.push({
       id: r.id,
       title: r.title,
       url: r.url,
-      source_domain: r.source_domain,
-      relevance: r.relevance,
+      description: r.description || undefined,
+      source_domain: r.source_domain || undefined,
+      relevance,
       source_type: "external",
     });
   }
 
   // Sort by relevance descending
   results.sort((a, b) => (b.relevance || 0) - (a.relevance || 0));
-  return results.slice(0, 30);
+  return results.slice(0, 50);
 }
 
 /**

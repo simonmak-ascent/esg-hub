@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   rrfFusion,
+  rrfFuseLists,
+  fuseListsAndRespond,
   percentileRank,
   jaccardSimilarity,
   cosineSimilarity,
@@ -203,5 +205,74 @@ describe("esgRerank", () => {
       expect(r.finalScore).toBeGreaterThanOrEqual(0);
       expect(r.finalScore).toBeLessThanOrEqual(1);
     });
+  });
+});
+
+describe("rrfFuseLists", () => {
+  it("ranks each list independently instead of by concatenation order", () => {
+    const pages = Array.from({ length: 10 }, (_, i) => makeInput(`p${i}`, "page", 10 - i));
+    const frameworks = [makeInput("f1", "framework", 1)];
+
+    const fused = rrfFuseLists([pages, frameworks], 60);
+    const page10 = fused.findIndex((r) => r.id === "p9");
+    const framework1 = fused.findIndex((r) => r.id === "f1");
+
+    // A framework ranked first in its own table must beat the 10th page.
+    expect(framework1).toBeLessThan(page10);
+  });
+
+  it("accumulates score when a document appears in several lists", () => {
+    const a = [makeInput("x", "page", 1)];
+    const b = [makeInput("x", "page", 1)];
+    const single = rrfFuseLists([a], 60);
+    const both = rrfFuseLists([a, b], 60);
+    expect(both[0].rrfScore).toBeCloseTo(single[0].rrfScore * 2, 10);
+  });
+
+  it("returns an empty list for no input", () => {
+    expect(rrfFuseLists([], 60)).toEqual([]);
+    expect(rrfFuseLists([[], []], 60)).toEqual([]);
+  });
+});
+
+describe("fuseListsAndRespond", () => {
+  const meta = new Map([
+    ["framework:1", { title: "GRI Standards", permalink: "gri" }],
+    ["framework:2", { title: "gri standards ", permalink: "gri-dup" }],
+    ["page:9", { title: "Climate Change", permalink: "climate-change" }],
+  ]);
+
+  it("deduplicates the same title within a table", () => {
+    const lists = [[
+      makeInput("1", "framework", 1),
+      makeInput("2", "framework", 1),
+      makeInput("9", "page", 1),
+    ]];
+    const res = fuseListsAndRespond(lists, { docMetadata: meta, limit: 10 });
+    const frameworks = res.results.filter((r) => r.table === "framework");
+    expect(frameworks).toHaveLength(1);
+    expect(res.results).toHaveLength(2);
+  });
+
+  it("carries permalink and labels pages with the singular source_type", () => {
+    const res = fuseListsAndRespond([[makeInput("9", "page", 1)]], {
+      docMetadata: meta,
+      limit: 10,
+    });
+    expect(res.results[0]).toMatchObject({
+      permalink: "climate-change",
+      source_type: "page",
+    });
+  });
+
+  it("paginates the deduplicated pool", () => {
+    const res = fuseListsAndRespond([[makeInput("9", "page", 1)]], {
+      docMetadata: meta,
+      limit: 10,
+      offset: 5,
+    });
+    expect(res.results).toHaveLength(0);
+    expect(res.pagination.total).toBe(1);
+    expect(res.pagination.has_more).toBe(false);
   });
 });
