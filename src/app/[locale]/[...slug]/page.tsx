@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
+import { cache } from "react";
 import { getPageByPermalink, getPagesBySection, DB_ERROR } from "@/lib/pages";
 import { extractHeadings } from "@/lib/markdown";
 import { formatPermalink } from "@/lib/utils";
@@ -15,6 +16,9 @@ import Link from "next/link";
 import DevelopersLanding from "@/components/developers/DevelopersLanding";
 import ApiDocs from "@/components/developers/ApiDocs";
 import McpDocs from "@/components/developers/McpDocs";
+
+// Deduplicate the page lookup between generateMetadata and the page body.
+const getPage = cache(getPageByPermalink);
 
 const SPECIAL_ROUTES: Record<string, { type: "redirect" | "component"; value: string }> = {
   "search": { type: "redirect", value: "/search" },
@@ -64,7 +68,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const permalink = buildPermalink(slug);
-  const page = await getPageByPermalink(permalink, locale);
+  const page = await getPage(permalink, locale);
 
   if (page === DB_ERROR) {
     return { title: "Service Temporarily Unavailable — ESG Hub" };
@@ -121,7 +125,7 @@ export default async function ContentPage({ params }: PageProps) {
   }
 
   const permalink = buildPermalink(slug);
-  const page = await getPageByPermalink(permalink, locale);
+  const page = await getPage(permalink, locale);
 
   if (page === DB_ERROR) {
     return (
