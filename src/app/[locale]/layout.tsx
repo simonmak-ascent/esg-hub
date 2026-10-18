@@ -9,7 +9,11 @@ import Footer from "@/components/Footer";
 import AIChatWidget from "@/components/AIChatWidget";
 import "@/app/globals.css";
 
-export const dynamic = "force-dynamic";
+// Incremental static regeneration: every page is rendered at most once per
+// window instead of on every request. The site previously rendered request-time
+// with `cache: no-store` on every DB call, so nothing was ever cached at the CDN
+// (TTFB 0.8-2.3 s). Content changes reach readers within the window.
+export const revalidate = 300;
 
 const SITE_URL = "https://esg-hub.ascent.partners";
 
