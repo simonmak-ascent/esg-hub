@@ -70,7 +70,16 @@ async function getAuthToken(): Promise<string> {
  * POST one JSON-RPC request with a namespace Bearer token. Retries once with a
  * fresh token on 401 (expired/rotated token).
  */
-async function rpcRequest(reqBody: unknown): Promise<{
+export interface QueryOptions {
+  /**
+   * Cache the response for this many seconds. Omit for request-time data (the
+   * default, `no-store`). A `no-store` fetch inside a route marks the whole
+   * route dynamic, which is what prevented ISR from ever taking effect.
+   */
+  revalidate?: number;
+}
+
+async function rpcRequest(reqBody: unknown, options?: QueryOptions): Promise<{
   ok: boolean;
   status: number;
   body: { result?: unknown; error?: { message?: string } } | null;
@@ -87,7 +96,9 @@ async function rpcRequest(reqBody: unknown): Promise<{
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(reqBody),
-      cache: "no-store",
+      ...(options?.revalidate !== undefined
+        ? { next: { revalidate: options.revalidate } }
+        : { cache: "no-store" as RequestCache }),
     });
 
   let res = await send(await getAuthToken());
@@ -156,11 +167,12 @@ export function isAlphanumericDash(value: string): boolean {
  */
 export async function queryHttp<T = unknown>(
   query: string,
-  vars?: Record<string, unknown>
+  vars?: Record<string, unknown>,
+  options?: QueryOptions
 ): Promise<T[]> {
   const env = getEnvVars();
   const params: unknown[] = vars && Object.keys(vars).length > 0 ? [query, vars] : [query];
-  const { ok, status, body: resBody } = await rpcRequest({ id: 1, method: "query", params });
+  const { ok, status, body: resBody } = await rpcRequest({ id: 1, method: "query", params }, options);
 
   if (!ok) {
     console.error(`[SurrealDB] HTTP ${status} — ns=${env.namespace} db=${env.database}`);
@@ -194,15 +206,15 @@ export async function queryHttp<T = unknown>(
  * Execute multiple statements and return all results using JSON-RPC
  */
 export async function queryHttpAll<T = unknown>(
-  query: string
+  query: string,
+  options?: QueryOptions
 ): Promise<
   Array<{ result: T[]; status: string; time: string }>
 > {
-  const { ok, status, body: resBody } = await rpcRequest({
-    id: 1,
-    method: "query",
-    params: [query],
-  });
+  const { ok, status, body: resBody } = await rpcRequest(
+    { id: 1, method: "query", params: [query] },
+    options
+  );
 
   if (!ok) {
     console.error(`[SurrealDB] HTTP ${status}`);
