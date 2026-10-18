@@ -39,6 +39,26 @@ export function pageSnippet(content: string, fallback: string): string {
 }
 
 /**
+ * Collapse duplicate *display* entries before numbering.
+ *
+ * Book chunks share a title, so numbering the raw list produced citations
+ * (`[7]`, `[8]`) that had no card in the UI. Distinct pages and distinct
+ * external URLs are kept; only chunks of the same book collapse.
+ */
+export function dedupeSources(sources: RagSource[]): RagSource[] {
+  const seen = new Set<string>();
+  return sources.filter((source) => {
+    const key =
+      source.source_type === "book_chunk"
+        ? `book:${source.book_title ?? source.id}`
+        : `${source.source_type}:${source.id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+/**
  * Number every context block so the model can cite `[n]` and the UI can show
  * the same number. Brave web results are cited separately and are never
  * double-counted as curated external resources.

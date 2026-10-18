@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 export const runtime = "nodejs";
 import { queryHttpAll, sanitize } from "@/lib/surrealdb";
 import { rrfFusion, esgRerank, type RrfInput } from "@/lib/search/hybrid";
-import { buildRAGContext, languageForLocale, pageSnippet } from "@/lib/search/rag";
+import { buildRAGContext, dedupeSources, languageForLocale, pageSnippet } from "@/lib/search/rag";
 import type { RankedResult } from "@/lib/search/types";
 import { checkRateLimit, rateLimitResponse } from "@/lib/middleware/rate-limit";
 import { forbiddenOriginResponse, isAllowedOrigin } from "@/lib/middleware/origin";
@@ -473,10 +473,13 @@ export async function POST(req: NextRequest) {
         existingUrls.add(br.url);
       }
     }
-    const { text: ragContext, citations } = buildRAGContext(mergedSources);
+    // Collapse book chunks before numbering so every citation in the answer
+    // resolves to a card the reader can see.
+    const contextSources = dedupeSources(mergedSources);
+    const { text: ragContext, citations } = buildRAGContext(contextSources);
 
     // Prepare sources for the client (without full snippets for bandwidth)
-    const clientSources = mergedSources.map((s) => ({
+    const clientSources = contextSources.map((s) => ({
       id: s.id,
       title: s.title.replace(/ \(Chunk \d+\)$/, ""),
       permalink: s.permalink,
@@ -489,15 +492,10 @@ export async function POST(req: NextRequest) {
       citation: citations.get(s.id),
     }));
 
-    // Deduplicate by title, keeping the first (lowest) citation number so the
-    // displayed order still matches the inline citations in the answer.
-    const seenTitles = new Set<string>();
+    // Only show sources that received a citation number (the context caps
+    // pages/books/externals), so no answer can cite an invisible source.
     const uniqueSources = clientSources
-      .filter((s) => {
-        if (seenTitles.has(s.title)) return false;
-        seenTitles.add(s.title);
-        return true;
-      })
+      .filter((s) => typeof s.citation === "number")
       .slice(0, 12);
 
     // Step 2: Stream AI response with RAG context

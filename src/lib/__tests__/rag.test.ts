@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildRAGContext, languageForLocale, pageSnippet, type RagSource } from "@/lib/search/rag";
+import { buildRAGContext, dedupeSources, languageForLocale, pageSnippet, type RagSource } from "@/lib/search/rag";
 
 function src(over: Partial<RagSource> & Pick<RagSource, "id" | "source_type">): RagSource {
   return { title: "Title", snippet: "snippet", ...over };
@@ -71,5 +71,32 @@ describe("languageForLocale", () => {
     expect(languageForLocale("zh")).toBe("Simplified Chinese");
     expect(languageForLocale("hk")).toBe("Traditional Chinese (Hong Kong)");
     expect(languageForLocale("fr")).toBe("English");
+  });
+});
+
+describe("dedupeSources", () => {
+  it("collapses chunks of the same book", () => {
+    const out = dedupeSources([
+      src({ id: "book_chunk:1", source_type: "book_chunk", book_title: "Book A" }),
+      src({ id: "book_chunk:2", source_type: "book_chunk", book_title: "Book A" }),
+      src({ id: "book_chunk:3", source_type: "book_chunk", book_title: "Book B" }),
+    ]);
+    expect(out.map((s) => s.id)).toEqual(["book_chunk:1", "book_chunk:3"]);
+  });
+
+  it("keeps distinct pages with the same title", () => {
+    const out = dedupeSources([
+      src({ id: "page:1", source_type: "page", title: "Materiality" }),
+      src({ id: "page:2", source_type: "page", title: "Materiality" }),
+    ]);
+    expect(out).toHaveLength(2);
+  });
+
+  it("keeps distinct external resources", () => {
+    const out = dedupeSources([
+      src({ id: "external_resource:1", source_type: "external" }),
+      src({ id: "brave:https://x", source_type: "external", url: "https://x" }),
+    ]);
+    expect(out).toHaveLength(2);
   });
 });
