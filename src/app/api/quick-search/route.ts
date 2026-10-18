@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 import { queryHttpAll, sanitize } from "@/lib/surrealdb";
+import { cjkContainsWhere, cjkRelevance, cjkTerms } from "@/lib/search/cjk";
 
 /**
  * Quick Search API — returns instant results from SurrealDB BM25 search
@@ -51,14 +52,13 @@ export async function GET(request: NextRequest) {
     const limit = Math.max(1, Math.min(parseInt(limitParam || "8", 10) || 8, 20));
     const escaped = sanitize(q.trim().slice(0, 500));
 
-    // The page FTS analyzer is ASCII/English, so CJK queries use substring
-    // matching on the translated fields instead of the `@n@` match operator.
+    // The page FTS analyzer is ASCII/English, so CJK queries match short Han
+    // terms from the question against the translated fields instead.
+    const zhTerms = isCjk ? cjkTerms(q.trim()) : [];
     const pageWhere = isCjk
-      ? `title_zh CONTAINS '${escaped}' OR content_zh CONTAINS '${escaped}'`
+      ? cjkContainsWhere(["title_zh", "content_zh"], zhTerms)
       : `title @0@ '${escaped}' OR content @1@ '${escaped}'`;
-    const pageScore = isCjk
-      ? `(IF title_zh CONTAINS '${escaped}' THEN 10 ELSE 1 END)`
-      : `search::score(0) + search::score(1)`;
+    const pageScore = isCjk ? "1" : `search::score(0) + search::score(1)`;
 
     const sql = `
       SELECT id, title, title_zh, permalink, description, description_zh, section,
@@ -91,7 +91,9 @@ export async function GET(request: NextRequest) {
           snippet: localizedDescription.slice(0, 200),
           source_type: "page",
           section: r.section ? String(r.section) : undefined,
-          relevance: Number(r.relevance) || 0,
+          relevance: isCjk
+            ? cjkRelevance(r.title_zh ? String(r.title_zh) : null, zhTerms)
+            : Number(r.relevance) || 0,
         });
       }
     }

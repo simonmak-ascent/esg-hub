@@ -1,4 +1,5 @@
 import { queryHttp, sanitize } from "./surrealdb";
+import { cjkContainsWhere, cjkRelevance, cjkTerms } from "./search/cjk";
 
 export interface SearchResult {
   id: string;
@@ -81,15 +82,16 @@ export async function keywordSearch(query: string, locale?: string): Promise<Sea
   );
 
   // The page FTS analyzer is ASCII/English; CJK text is not tokenized. For
-  // zh/hk, substring matching is the reliable path (354 rows, cheap).
+  // zh/hk, match short Han terms from the query against the translated fields
+  // (354 rows, cheap) and rank title matches first in JS.
+  const zhTerms = isCjk ? cjkTerms(trimmed) : [];
   let zhResults: typeof pageResults = [];
   if (isCjk) {
     zhResults = await queryHttp<(typeof pageResults)[number]>(
       `SELECT id, title, title_zh, title_hi, permalink, description, description_zh, section,
-        (IF title_zh CONTAINS '${escaped}' THEN 10 ELSE 1 END) AS relevance
+        1 AS relevance
       FROM page
-      WHERE title_zh CONTAINS '${escaped}' OR content_zh CONTAINS '${escaped}'
-      ORDER BY relevance DESC
+      WHERE ${cjkContainsWhere(["title_zh", "content_zh"], zhTerms)}
       LIMIT 50;`
     );
   }
@@ -97,7 +99,23 @@ export async function keywordSearch(query: string, locale?: string): Promise<Sea
   const results: SearchResult[] = [];
   const seen = new Set<string>();
 
-  for (const r of [...zhResults, ...pageResults]) {
+  for (const r of zhResults) {
+    if (seen.has(r.id)) continue;
+    seen.add(r.id);
+
+    const localized = resolveLocalizedContent(r, locale || "en");
+    results.push({
+      id: r.id,
+      title: localized.title,
+      permalink: r.permalink,
+      description: localized.description,
+      section: r.section || undefined,
+      relevance: cjkRelevance(r.title_zh, zhTerms),
+      source_type: "page",
+    });
+  }
+
+  for (const r of pageResults) {
     const relevance = Number(r.relevance) || 0;
     if (relevance <= 0) continue;
     if (seen.has(r.id)) continue;
