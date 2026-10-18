@@ -16,6 +16,7 @@ interface Source {
   domain?: string;
   section?: string;
   snippet?: string;
+  citation?: number;
 }
 
 interface QuickResult {
@@ -147,6 +148,8 @@ export default function AISearchAgent() {
   const [quickResults, setQuickResults] = useState<QuickResult[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [noEvidence, setNoEvidence] = useState(false);
+  const [partialAnswer, setPartialAnswer] = useState(false);
   const [activeMode, setActiveMode] = useState<"ai" | "quick">("ai");
 
   // Embedding state
@@ -283,6 +286,10 @@ export default function AISearchAgent() {
               setSources(json.data || []);
             } else if (json.type === "chunk") {
               setAiAnswer((prev) => prev + json.data);
+            } else if (json.type === "no_evidence") {
+              setNoEvidence(true);
+            } else if (json.type === "done") {
+              if (json.partial) setPartialAnswer(true);
             } else if (json.type === "error") {
               setError(json.data || "An error occurred");
             }
@@ -648,11 +655,16 @@ export default function AISearchAgent() {
               </div>
 
               {/* Streaming answer */}
-              <div className="prose" style={{
-                fontSize: "0.92rem",
-                lineHeight: 1.7,
-                color: "var(--color-text)",
-              }}>
+              <div
+                className="prose"
+                aria-live="polite"
+                aria-busy={isSearching}
+                style={{
+                  fontSize: "0.92rem",
+                  lineHeight: 1.7,
+                  color: "var(--color-text)",
+                }}
+              >
                 {aiAnswer ? (
                   <ReactMarkdown
                     components={{
@@ -708,6 +720,31 @@ export default function AISearchAgent() {
             </div>
           )}
 
+          {/* No knowledge-base evidence */}
+          {noEvidence && !isSearching && (
+            <div
+              role="status"
+              style={{
+                background: "var(--color-bg-alt)",
+                border: "1px solid var(--color-border-light)",
+                borderRadius: 0,
+                padding: "0.75rem 1rem",
+                marginBottom: "1rem",
+                fontSize: "0.88rem",
+                color: "var(--color-text-secondary)",
+              }}
+            >
+              {t("noEvidence")}
+            </div>
+          )}
+
+          {/* Interrupted answer */}
+          {partialAnswer && !isSearching && (
+            <p style={{ fontSize: "0.78rem", color: "var(--color-text-muted)", marginBottom: "1rem" }}>
+              {t("partialAnswer")}
+            </p>
+          )}
+
           {/* Sources */}
           {sources.length > 0 && (
             <div style={{ marginBottom: "2rem" }}>
@@ -721,7 +758,7 @@ export default function AISearchAgent() {
                 marginBottom: "0.75rem",
               }}>
                 {t("sources", { count: sources.length })}
-                {sources.some(s => s.id?.startsWith?.('google:')) && (
+                {sources.some(s => s.id?.startsWith?.('brave:')) && (
                   <span style={{ fontSize: '0.72rem', fontWeight: 400, color: 'var(--color-text-muted)', marginLeft: '0.5rem' }}>
                     {t("inclWebResults")}
                   </span>
@@ -752,6 +789,16 @@ export default function AISearchAgent() {
                     }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.2rem" }}>
                         <SourceIcon type={source.source_type} />
+                        {typeof source.citation === "number" && (
+                          <span style={{
+                            fontFamily: "var(--font-heading)",
+                            fontSize: "0.72rem",
+                            fontWeight: 700,
+                            color: "var(--color-text-muted)",
+                          }}>
+                            [{source.citation}]
+                          </span>
+                        )}
                         <span style={{
                           fontFamily: "var(--font-heading)",
                           fontWeight: 600,
@@ -777,14 +824,14 @@ export default function AISearchAgent() {
                         )}
                         {source.source_type === "external" && source.domain && (
                           <span style={{
-                            ...(source.id?.startsWith?.('google:') ? {
+                            ...(source.id?.startsWith?.('brave:') ? {
                               background: 'rgba(66,133,244,0.12)',
                               padding: '0.05em 0.35em',
                               borderRadius: '3px',
                               color: 'var(--color-link)',
                             } : {})
                           }}>
-                            {source.id?.startsWith?.('google:') ? '🌐 ' : ''}{source.domain}
+                            {source.id?.startsWith?.('brave:') ? '🌐 ' : ''}{source.domain}
                           </span>
                         )}
                       </div>
