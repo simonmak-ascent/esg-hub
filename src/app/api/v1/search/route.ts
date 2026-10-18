@@ -4,6 +4,7 @@ export const runtime = "nodejs";
 import { keywordSearch } from "@/lib/search";
 import { queryHttp, queryHttpAll, sanitize, sanitizeInt } from "@/lib/surrealdb";
 import { fuseListsAndRespond, type RrfInput } from "@/lib/search/hybrid";
+import { toWordBoundaryLiteral, wordBoundaryWhere } from "@/lib/search/query";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -116,7 +117,7 @@ export async function GET(request: NextRequest) {
     }
 
     const escaped = sanitize(q.slice(0, 500));
-    const lowerEscaped = sanitize(q.slice(0, 500).toLowerCase());
+    const wordLiteral = sanitize(toWordBoundaryLiteral(q.slice(0, 500)));
 
     // ----- Table definitions -----
     // `where` + `score` must use match references that exist as FULLTEXT
@@ -135,7 +136,7 @@ export async function GET(request: NextRequest) {
     const allTableDefs: TableDef[] = [
       {
         name: "page",
-        select: "id, title, permalink, description, section, updated_at",
+        select: "id, title, title_zh, permalink, description, description_zh, section, updated_at",
         where: `title @0@ '${escaped}' OR content @1@ '${escaped}' OR title_zh @2@ '${escaped}' OR content_zh @3@ '${escaped}' OR title_hi @4@ '${escaped}' OR content_hi @5@ '${escaped}'`,
         score: "search::score(0) + search::score(1) + search::score(2) + search::score(3) + search::score(4) + search::score(5)",
         limit: 10,
@@ -159,8 +160,8 @@ export async function GET(request: NextRequest) {
       },
       {
         name: "industries",
-        select: "id, name_en AS title, sector_id AS section, updated_at",
-        where: `string::lowercase(name_en) CONTAINS '${lowerEscaped}'`,
+        select: "id, name_en AS title, name_zh AS title_zh, sector_id AS section, updated_at",
+        where: wordBoundaryWhere("name_en", wordLiteral),
         score: "1",
         limit: 5,
         sourceType: "page",
@@ -168,7 +169,7 @@ export async function GET(request: NextRequest) {
       {
         name: "entity",
         select: "id, name AS title, entity_type AS section, permalink, updated_at",
-        where: `string::lowercase(name) CONTAINS '${lowerEscaped}'`,
+        where: wordBoundaryWhere("name", wordLiteral),
         score: "1",
         limit: 5,
         sourceType: "page",
@@ -215,7 +216,7 @@ export async function GET(request: NextRequest) {
     if (isCjk && source !== "external") {
       const zhDef: TableDef = {
         name: "page",
-        select: "id, title, permalink, description, section, updated_at",
+        select: "id, title, title_zh, permalink, description, description_zh, section, updated_at",
         where: `title_zh CONTAINS '${escaped}' OR content_zh CONTAINS '${escaped}'`,
         score: `(IF title_zh CONTAINS '${escaped}' THEN 10 ELSE 1 END)`,
         limit: 10,
@@ -227,8 +228,30 @@ export async function GET(request: NextRequest) {
       statements.push({ def: zhDef, kind: "zh" });
     }
 
-    // Single round-trip via queryHttpAll
-    const allQueryResults = await queryHttpAll<Record<string, unknown>>(sqlParts.join("\n"));
+    // Single round-trip via queryHttpAll. A parse error aborts the whole batch,
+    // so degrade to keyword search rather than failing the request outright.
+    let allQueryResults: Awaited<ReturnType<typeof queryHttpAll<Record<string, unknown>>>>;
+    try {
+      allQueryResults = await queryHttpAll<Record<string, unknown>>(sqlParts.join("\n"));
+    } catch (err) {
+      console.error("[v1/search] hybrid batch failed, falling back to keyword search:", err);
+      const fallback = await keywordSearch(q, locale);
+      const page = fallback.slice(offset, offset + hybridLimit);
+      return NextResponse.json({
+        query: q,
+        mode: "hybrid",
+        degraded: true,
+        results: page,
+        data: page,
+        total: fallback.length,
+        pagination: {
+          total: fallback.length,
+          offset,
+          limit: hybridLimit,
+          has_more: offset + page.length < fallback.length,
+        },
+      }, { headers: CORS_HEADERS });
+    }
 
     // ----- Collect one ranked list per statement -----
     const lists: RrfInput[][] = [];
@@ -262,11 +285,13 @@ export async function GET(request: NextRequest) {
 
         if (!docMetadata.has(key)) {
           const domain = r.source_domain ?? r.domain;
+          const localizedTitle = isCjk && r.title_zh ? String(r.title_zh) : String(r.title || "");
+          const localizedDescription = isCjk && r.description_zh ? String(r.description_zh) : (r.description ? String(r.description) : undefined);
           docMetadata.set(key, {
-            title: String(r.title || ""),
+            title: localizedTitle,
             permalink: r.permalink ? String(r.permalink) : undefined,
             url: r.url ? String(r.url) : undefined,
-            description: r.description ? String(r.description) : undefined,
+            description: localizedDescription,
             section: r.section ? String(r.section) : undefined,
             domain: domain ? String(domain) : undefined,
             source_type: def.sourceType,
