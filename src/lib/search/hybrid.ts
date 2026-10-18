@@ -71,14 +71,25 @@ export function rrfFusion(
   hnswResults: RrfInput[],
   k: number = 60
 ): RrfOutput[] {
+  return rrfFuseLists([bm25Results, hnswResults], k);
+}
+
+/**
+ * Fuse any number of ranked lists.
+ *
+ * Each list is ranked independently (rank = position within that list), so a
+ * framework that is the best match in its own table is not pushed behind every
+ * page result simply because pages are queried first.
+ */
+export function rrfFuseLists(lists: RrfInput[][], k: number = 60): RrfOutput[] {
   const docMap = new Map<string, RrfOutput>();
 
-  function rankResults(results: RrfInput[]): void {
+  for (const results of lists) {
     for (let i = 0; i < results.length; i++) {
       const r = results[i];
+      if (!r) continue;
       const key = `${r.table}:${r.id}`;
-      const rank = i + 1;
-      const term = 1 / (k + rank);
+      const term = 1 / (k + i + 1);
       const existing = docMap.get(key);
       if (existing) {
         existing.rrfScore += term;
@@ -91,9 +102,6 @@ export function rrfFusion(
       }
     }
   }
-
-  rankResults(bm25Results);
-  rankResults(hnswResults);
 
   const fused = Array.from(docMap.values());
   fused.sort((a, b) => b.rrfScore - a.rrfScore);
@@ -227,10 +235,11 @@ export function esgRerank(
 interface DocMeta {
   title: string;
   permalink?: string;
+  url?: string;
   description?: string;
   section?: string;
   domain?: string;
-  source_type?: "pages" | "external";
+  source_type?: "page" | "external";
 }
 
 export function fuseRerankAndRespond(
@@ -249,7 +258,30 @@ export function fuseRerankAndRespond(
     docMetadata?: Map<string, DocMeta>;
   }
 ): HybridSearchResponse {
-  const fused = rrfFusion(bm25Results, hnswResults);
+  return fuseListsAndRespond([bm25Results, hnswResults], params);
+}
+
+/**
+ * Fuse ranked lists, re-rank, deduplicate and paginate.
+ *
+ * `lists` are ranked independently — one list per table and per retriever.
+ */
+export function fuseListsAndRespond(
+  lists: RrfInput[][],
+  params: {
+    limit?: number;
+    offset?: number;
+    queryEmbedding?: number[];
+    knownFrameworks?: Set<string>;
+    queryTokens?: string[];
+    docAuthority?: Map<string, number>;
+    docUpdatedAt?: Map<string, Date>;
+    docEmbeddings?: Map<string, number[]>;
+    docFacets?: Map<string, string[]>;
+    docMetadata?: Map<string, DocMeta>;
+  }
+): HybridSearchResponse {
+  const fused = rrfFuseLists(lists);
 
   const rankedInput: RankedResult[] = fused.map((f) => ({
     id: f.id,
@@ -274,10 +306,22 @@ export function fuseRerankAndRespond(
     params.docFacets
   );
 
+  // Collapse duplicate records (the same title in the same table, e.g. a
+  // framework that was backfilled twice). The highest-scoring copy wins.
+  const seenTitles = new Set<string>();
+  const deduped = reranked.filter((r) => {
+    const meta = params.docMetadata?.get(`${r.table}:${r.id}`);
+    if (!meta?.title) return true;
+    const key = `${r.table}:${meta.title.trim().toLowerCase()}`;
+    if (seenTitles.has(key)) return false;
+    seenTitles.add(key);
+    return true;
+  });
+
   const limit = Math.max(1, Math.min(params.limit ?? 20, 100));
   const offset = Math.max(0, params.offset ?? 0);
-  const total = reranked.length;
-  const page = reranked.slice(offset, offset + limit);
+  const total = deduped.length;
+  const page = deduped.slice(offset, offset + limit);
 
   const results: SearchResult[] = page.map((r) => {
     const meta = params.docMetadata?.get(`${r.table}:${r.id}`);
@@ -286,11 +330,12 @@ export function fuseRerankAndRespond(
       table: r.table,
       title: meta?.title ?? "",
       permalink: meta?.permalink,
+      url: meta?.url,
       description: meta?.description,
       section: meta?.section,
       domain: meta?.domain,
       relevance: Math.round(r.finalScore * 10000) / 100,
-      source_type: meta?.source_type ?? "pages",
+      source_type: meta?.source_type ?? "page",
     };
   });
 
