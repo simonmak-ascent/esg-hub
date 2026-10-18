@@ -5,6 +5,7 @@ import { keywordSearch } from "@/lib/search";
 import { queryHttp, queryHttpAll, sanitize, sanitizeInt } from "@/lib/surrealdb";
 import { fuseListsAndRespond, type RrfInput } from "@/lib/search/hybrid";
 import { toWordBoundaryLiteral, wordBoundaryWhere } from "@/lib/search/query";
+import { cjkContainsWhere, cjkTerms } from "@/lib/search/cjk";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -214,11 +215,12 @@ export async function GET(request: NextRequest) {
     // CJK substring retriever: the page FTS analyzer is ASCII/English, so
     // Chinese matches never surface through `@0@`-style match operators.
     if (isCjk && source !== "external") {
+      const zhTerms = cjkTerms(q);
       const zhDef: TableDef = {
         name: "page",
         select: "id, title, title_zh, permalink, description, description_zh, section, updated_at",
-        where: `title_zh CONTAINS '${escaped}' OR content_zh CONTAINS '${escaped}'`,
-        score: `(IF title_zh CONTAINS '${escaped}' THEN 10 ELSE 1 END)`,
+        where: cjkContainsWhere(["title_zh", "content_zh"], zhTerms),
+        score: "1",
         limit: 10,
         sourceType: "page",
       };

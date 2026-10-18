@@ -4,6 +4,7 @@ export const runtime = "nodejs";
 import { queryHttpAll, sanitize } from "@/lib/surrealdb";
 import { rrfFusion, esgRerank, type RrfInput } from "@/lib/search/hybrid";
 import { buildRAGContext, dedupeSources, languageForLocale, pageSnippet } from "@/lib/search/rag";
+import { cjkContainsWhere, cjkTerms } from "@/lib/search/cjk";
 import type { RankedResult } from "@/lib/search/types";
 import { checkRateLimit, rateLimitResponse } from "@/lib/middleware/rate-limit";
 import { forbiddenOriginResponse, isAllowedOrigin } from "@/lib/middleware/origin";
@@ -67,10 +68,11 @@ async function bm25Search(query: string, limit: number = 8, locale: string = "en
   const isCjk = locale === "zh" || locale === "hk";
   const results: RAGSource[] = [];
 
-  // The page FTS analyzer is ASCII/English; CJK queries use substring matching
-  // on the translated fields instead.
+  // The page FTS analyzer is ASCII/English; CJK questions are reduced to short
+  // Han terms and matched against the translated fields.
+  const zhTerms = isCjk ? cjkTerms(query.slice(0, 500)) : [];
   const pageWhere = isCjk
-    ? `title_zh CONTAINS '${escaped}' OR content_zh CONTAINS '${escaped}'`
+    ? cjkContainsWhere(["title_zh", "content_zh"], zhTerms)
     : `title @0@ '${escaped}' OR content @1@ '${escaped}'`;
   const pageScore = isCjk ? "1" : "search::score(0) + search::score(1)";
 
