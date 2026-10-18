@@ -228,8 +228,30 @@ export async function GET(request: NextRequest) {
       statements.push({ def: zhDef, kind: "zh" });
     }
 
-    // Single round-trip via queryHttpAll
-    const allQueryResults = await queryHttpAll<Record<string, unknown>>(sqlParts.join("\n"));
+    // Single round-trip via queryHttpAll. A parse error aborts the whole batch,
+    // so degrade to keyword search rather than failing the request outright.
+    let allQueryResults: Awaited<ReturnType<typeof queryHttpAll<Record<string, unknown>>>>;
+    try {
+      allQueryResults = await queryHttpAll<Record<string, unknown>>(sqlParts.join("\n"));
+    } catch (err) {
+      console.error("[v1/search] hybrid batch failed, falling back to keyword search:", err);
+      const fallback = await keywordSearch(q, locale);
+      const page = fallback.slice(offset, offset + hybridLimit);
+      return NextResponse.json({
+        query: q,
+        mode: "hybrid",
+        degraded: true,
+        results: page,
+        data: page,
+        total: fallback.length,
+        pagination: {
+          total: fallback.length,
+          offset,
+          limit: hybridLimit,
+          has_more: offset + page.length < fallback.length,
+        },
+      }, { headers: CORS_HEADERS });
+    }
 
     // ----- Collect one ranked list per statement -----
     const lists: RrfInput[][] = [];

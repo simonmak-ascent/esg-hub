@@ -19,8 +19,11 @@ export function toWordBoundaryLiteral(query: string): string {
 /**
  * SurrealQL predicate for a word-boundary match, or `false` when the query has
  * no matchable characters.
+ *
+ * `string::matches()` is used rather than a match operator: SurrealDB has no
+ * `~` operator, and a parse error aborts every statement in the batch.
  */
 export function wordBoundaryWhere(column: string, literal: string): string {
   if (!literal) return "false";
-  return `${column} ~ '(?i)\\b${literal}\\b'`;
+  return `string::matches(${column}, '(?i)\\b${literal}\\b')`;
 }

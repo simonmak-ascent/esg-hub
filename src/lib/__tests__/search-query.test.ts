@@ -25,7 +25,9 @@ describe("toWordBoundaryLiteral", () => {
 
 describe("wordBoundaryWhere", () => {
   it("builds a case-insensitive boundary predicate", () => {
-    expect(wordBoundaryWhere("name_en", "gri")).toBe("name_en ~ '(?i)\\bgri\\b'");
+    expect(wordBoundaryWhere("name_en", "gri")).toBe(
+      "string::matches(name_en, '(?i)\\bgri\\b')"
+    );
   });
 
   it("never returns a matchable predicate for an empty literal", () => {
