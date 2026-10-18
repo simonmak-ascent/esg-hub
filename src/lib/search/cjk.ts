@@ -46,7 +46,9 @@ export function cjkTerms(query: string, max = 8): string[] {
   const terms: string[] = [];
 
   for (const run of runs) {
-    if (run.length <= 3) {
+    // Latin words are already tokens: keep them whole. Only Han runs need
+    // n-grams, because there are no spaces to split on.
+    if (!/\p{Script=Han}/u.test(run) || run.length <= 3) {
       terms.push(run);
       continue;
     }
