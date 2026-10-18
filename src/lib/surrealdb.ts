@@ -52,7 +52,12 @@ function postJson(url: string, payload: unknown): Promise<{ status: number; body
         port: target.port || 443,
         path: `${target.pathname}${target.search}`,
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          // node:https does not decompress responses; ask for plain JSON.
+          "Accept-Encoding": "identity",
+        },
       },
       (res) => {
         let data = "";
