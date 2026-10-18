@@ -36,6 +36,13 @@ jobs:
           curl -sf https://esg-hub.ascent.partners/api/health | tee /tmp/health.json
           curl -sf -o /dev/null -w "health -> %{http_code}\n" https://esg-hub.ascent.partners/api/health
 
+      - name: Production health probe
+        id: health
+        run: |
+          # Fails on a DB outage or an empty corpus, which a 200 on / hides.
+          curl -sf https://esg-hub.ascent.partners/api/health | tee /tmp/health.json
+          curl -sf -o /dev/null -w "health -> %{http_code}\n" https://esg-hub.ascent.partners/api/health
+
       - name: Production smoke checks
         id: smoke
         run: |
