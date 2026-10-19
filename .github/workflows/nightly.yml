@@ -118,16 +118,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Checkout tool_packages
-        uses: actions/checkout@v7
-        with:
-          repository: simonmak-ascent/tool_packages
-          path: tool_packages_repo
-          ref: master
-          token: ${{ secrets.TOOL_PACKAGES_PAT }}
-
-      - name: Link tool_packages
-        run: ln -s "$GITHUB_WORKSPACE/tool_packages_repo" "${GITHUB_WORKSPACE}/../tool_package"
+      # The @simonmak-ascent/* deps are vendored under vendor/simonmak-ascent
+      # (package.json uses file: paths), so the old tool_packages checkout is
+      # gone. It failed with "Repository not found" before any check ran.
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
