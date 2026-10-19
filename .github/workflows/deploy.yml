@@ -41,16 +41,6 @@ jobs:
       - name: Run unit tests
         run: npx vitest run
 
-      - name: Verify Database Schema
-        run: pnpm verify:db
-        env:
-          SURREAL_URL: ${{ secrets.SURREAL_URL }}
-          SURREAL_USERNAME: ${{ secrets.SURREAL_USERNAME }}
-          SURREAL_PASSWORD: ${{ secrets.SURREAL_PASSWORD }}
-          SURREAL_NAMESPACE: ${{ secrets.SURREAL_NAMESPACE }}
-          SURREAL_DATABASE: ${{ secrets.SURREAL_DATABASE }}
-        continue-on-error: true
-
       # The GitHub SURREAL_* secrets are stale (signin returns InvalidAuth), while
       # the Vercel environment has the working values. Pull the same env the deploy
       # uses so the build renders pages against a reachable database.
@@ -59,6 +49,14 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Verify Database Schema
+        run: |
+          set -a
+          . ./.vercel/.env.production.local
+          set +a
+          pnpm verify:db
+        continue-on-error: true
 
       - name: Production build
         run: pnpm build
@@ -93,13 +91,12 @@ jobs:
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
+      # Do NOT pass the GitHub SURREAL_* secrets here: they are stale (signin
+      # returns InvalidAuth) and process env overrides the values `vercel pull`
+      # wrote to .vercel/.env.production.local, so the prerender steps fail.
+      # The pulled Vercel production environment is the single source of truth.
       - name: Build for Vercel
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          SURREAL_URL: ${{ secrets.SURREAL_URL }}
-          SURREAL_USERNAME: ${{ secrets.SURREAL_USERNAME }}
-          SURREAL_PASSWORD: ${{ secrets.SURREAL_PASSWORD }}
-          SURREAL_DATABASE: ${{ secrets.SURREAL_DATABASE }}
 
       - name: Deploy prebuilt to production
         id: deploy
