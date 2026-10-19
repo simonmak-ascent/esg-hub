@@ -41,15 +41,15 @@ export async function getToken(env = getDbEnv()) {
   if (!env.endpoint) {
     throw new Error("SURREAL_URL is not set");
   }
-  const res = await fetch(`${env.endpoint}/rpc`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({
+  const res = await postRpc(
+    env,
+    { "Content-Type": "application/json", Accept: "application/json" },
+    {
       id: 1,
       method: "signin",
       params: [{ user: env.username, pass: env.password, NS: env.namespace }],
-    }),
-  });
+    },
+  );
   const body = await res.json().catch(() => null);
   if (!res.ok || !body || body.error || typeof body.result !== "string") {
     throw new Error(`SurrealDB signin failed (HTTP ${res.status})`);
@@ -70,15 +70,40 @@ export async function getAuthHeaders(env = getDbEnv()) {
   };
 }
 
+const RETRYABLE_STATUS = new Set([429, 502, 503, 504]);
+const MAX_ATTEMPTS = 4;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * POST one JSON-RPC request, retrying transient failures. SurrealDB Cloud
+ * answers 503 under load; the R&D loop issues thousands of queries and used to
+ * die on the first one.
+ */
+async function postRpc(env, headers, payload) {
+  let lastError = null;
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    try {
+      const res = await fetch(`${env.endpoint}/rpc`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+      });
+      if (!RETRYABLE_STATUS.has(res.status)) return res;
+      lastError = new Error(`SurrealDB query failed (HTTP ${res.status})`);
+    } catch (error) {
+      lastError = error;
+    }
+    if (attempt < MAX_ATTEMPTS - 1) await sleep(500 * 2 ** attempt);
+  }
+  throw lastError;
+}
+
 /** Run one SurrealQL statement; returns the last statement's result array. */
 export async function querySurreal(sql, vars, env = getDbEnv()) {
   const headers = await getAuthHeaders(env);
   const params = vars && Object.keys(vars).length > 0 ? [sql, vars] : [sql];
-  const res = await fetch(`${env.endpoint}/rpc`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ id: 1, method: "query", params }),
-  });
+  const res = await postRpc(env, headers, { id: 1, method: "query", params });
   const body = await res.json().catch(() => null);
   if (!res.ok || body?.error) {
     throw new Error(`SurrealDB query failed (HTTP ${res.status})`);
@@ -95,11 +120,7 @@ export async function querySurreal(sql, vars, env = getDbEnv()) {
 /** Run SurrealQL statements; returns the full statement-result array (like the /sql endpoint). */
 export async function querySurrealAll(sql, env = getDbEnv()) {
   const headers = await getAuthHeaders(env);
-  const res = await fetch(`${env.endpoint}/rpc`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ id: 1, method: "query", params: [sql] }),
-  });
+  const res = await postRpc(env, headers, { id: 1, method: "query", params: [sql] });
   const body = await res.json().catch(() => null);
   if (!res.ok || body?.error) {
     throw new Error(`SurrealDB query failed (HTTP ${res.status})`);
