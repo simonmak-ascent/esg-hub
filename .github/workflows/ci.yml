@@ -67,10 +67,7 @@ jobs:
     continue-on-error: true
     timeout-minutes: 15
     env:
-      SURREAL_URL: ${{ secrets.SURREAL_URL }}
-      SURREAL_USERNAME: ${{ secrets.SURREAL_USERNAME }}
-      SURREAL_PASSWORD: ${{ secrets.SURREAL_PASSWORD }}
-      SURREAL_DATABASE: ${{ secrets.SURREAL_DATABASE }}
+      # eval-search talks to the public API only; it needs no DB credentials.
       API_BASE: https://esg-hub.ascent.partners
     steps:
       - name: Checkout code
