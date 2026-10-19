@@ -6,13 +6,12 @@
  *   node scripts/review-pilot-content.mjs --status
  */
 
-import { getDbEnv } from "./lib/db-env.mjs";
+import { querySurreal } from "./lib/db-env.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 
 const SPEC_DIR = new URL("../specs/ux-mcp-content-bestpractice/", import.meta.url).pathname;
-const env = getDbEnv();
 
 const args = process.argv.slice(2);
 const mode = args[0];
@@ -21,21 +20,10 @@ const fileIdx = args.indexOf("--file");
 const file = fileIdx > -1 ? args[fileIdx + 1] : null;
 const write = args.includes("--write");
 
-async function q(body) {
-  const res = await fetch(`${env.endpoint}/sql`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/plain",
-      Accept: "application/json",
-      "surreal-ns": env.namespace,
-      "surreal-db": env.database,
-      Authorization: "Basic " + Buffer.from(`${env.username}:${env.password}`).toString("base64"),
-    },
-    body,
-  });
-  if (!res.ok) throw new Error(`SurrealDB error ${res.status}: ${await res.text()}`);
-  return (await res.json())[0]?.result;
-}
+// SurrealDB Cloud rejects HTTP Basic auth for namespace/database users ("There
+// was a problem with authentication"); db-env signs in over JSON-RPC and sends
+// a Bearer token, which is the only path that works.
+const q = (body) => querySurreal(body);
 const esc = (s) => s.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 const slugOf = (pl) => pl.replace(/^\/|\/$/g, "").replace(/\//g, "__");
 
