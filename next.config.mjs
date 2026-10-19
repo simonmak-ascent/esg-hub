@@ -7,6 +7,21 @@ const nextConfig = {
   output: "standalone",
   transpilePackages: ["@simonmak-ascent/esg-hub-mcp"],
   reactStrictMode: true,
+  async redirects() {
+    // The regulations section has five regional guides but no hub page, and
+    // four content pages link to /regulations/ (nightly lychee: 404). Send
+    // readers to the contents index, which lists the section, until a real
+    // hub page exists.
+    return [
+      { source: "/regulations", destination: "/contents", permanent: false },
+      { source: "/regulations/", destination: "/contents", permanent: false },
+      {
+        source: "/:locale(en|zh|hi|hk)/regulations",
+        destination: "/:locale/contents",
+        permanent: false,
+      },
+    ];
+  },
   outputFileTracingExcludes: {
     "*": [
       "node_modules/onnxruntime-node/**",
