@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { getPageByPermalink, getPagesBySection, DB_ERROR } from "@/lib/pages";
@@ -55,6 +55,7 @@ function buildPermalink(slugParts: string[]): string {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale, slug } = await params;
+  setRequestLocale(locale);
   const slugPath = slug.join("/");
 
   const devRoute = DEVELOPER_ROUTES[slugPath];
@@ -104,6 +105,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ContentPage({ params }: PageProps) {
   const { locale, slug } = await params;
+  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "DynamicPage" });
   const tPages = await getTranslations({ locale, namespace: "Pages" });
   const tPillars = await getTranslations({ locale, namespace: "Pillars" });

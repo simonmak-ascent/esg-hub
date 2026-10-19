@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getPageByPermalink, CONTENT_REVALIDATE } from "@/lib/pages";
 import { queryHttp } from "@/lib/surrealdb";
 import MarkdownContent from "@/components/MarkdownContent";
@@ -12,6 +12,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
+  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "Books" });
   
   const path = locale === "en" ? "/books" : `/${locale}/books`;
@@ -93,6 +94,7 @@ function formatFileSize(bytes: number): string {
 
 export default async function BooksPage({ params }: Props) {
   const { locale } = await params;
+  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "Books" });
   const tNav = await getTranslations({ locale, namespace: "Navigation" });
   const tCommon = await getTranslations({ locale, namespace: "Common" });
