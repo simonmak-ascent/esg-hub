@@ -2,7 +2,8 @@ import { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
-import { getPageByPermalink, getPagesBySection, DB_ERROR } from "@/lib/pages";
+import { getAllPages, getPageByPermalink, getPagesBySection, DB_ERROR } from "@/lib/pages";
+import { routing } from "@/i18n/routing";
 import { extractHeadings } from "@/lib/markdown";
 import { formatPermalink } from "@/lib/utils";
 import { SITE_URL, HUB_PAGE_MAX_CONTENT_LENGTH, ARTICLE_MIN_CONTENT_LENGTH, TOC_MIN_CONTENT_LENGTH } from "@/lib/constants";
@@ -51,6 +52,34 @@ interface PageProps {
 
 function buildPermalink(slugParts: string[]): string {
   return `/${slugParts.join("/")}/`;
+}
+
+/**
+ * Prerender every content permalink for every locale.
+ *
+ * Without this the catch-all is a dynamic-param route, so each article was
+ * rendered on every request (no CDN cache) even though the layout asks for a
+ * 5-minute revalidation window. Paths that are not returned here (new pages
+ * between builds) still render on demand via `dynamicParams`.
+ */
+export async function generateStaticParams() {
+  const pages = await getAllPages();
+  // Permalinks with a dedicated route (books, videos, contents, search) are
+  // served by their own page files, so keep them out of the catch-all.
+  const dedicated = new Set(Object.keys(SPECIAL_ROUTES));
+
+  const slugs = Array.from(
+    new Set(
+      pages
+        .map((page) => page.permalink.replace(/^\/+|\/+$/g, ""))
+        .filter((permalink) => permalink.length > 0)
+        .filter((permalink) => !dedicated.has(permalink.split("/")[0]))
+    )
+  );
+
+  return routing.locales.flatMap((locale) =>
+    slugs.map((slug) => ({ locale, slug: slug.split("/") }))
+  );
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
