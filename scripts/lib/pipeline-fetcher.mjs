@@ -5,7 +5,7 @@
  */
 
 import crypto from "node:crypto";
-import { url as nodeUrl } from "node:url";
+import { URL as NodeURL } from "node:url";
 
 const CONNECT_TIMEOUT_MS = 10_000;
 const READ_TIMEOUT_MS = 30_000;
@@ -216,7 +216,7 @@ export function computeChecksum(text) {
  */
 export function normalizeUrl(url) {
   try {
-    const parsed = new nodeUrl.URL(url);
+    const parsed = new NodeURL(url);
     parsed.search = "";
     parsed.hash = "";
     // Remove trailing slash (preserve root "/")
