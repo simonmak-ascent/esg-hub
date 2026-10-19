@@ -23,6 +23,7 @@
     "@simonmak-ascent/esg-hub-mcp": "file:./mcp-server",
     "@simonmak-ascent/utils": "file:vendor/simonmak-ascent/utils",
     "@simonmak-ascent/validation": "file:vendor/simonmak-ascent/validation",
+    "cheerio": "^1.2.0",
     "clsx": "^2.1.1",
     "gray-matter": "^4.0.3",
     "lucide-react": "^0.574.0",
