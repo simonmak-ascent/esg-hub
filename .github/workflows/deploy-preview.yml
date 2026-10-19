@@ -91,7 +91,10 @@ jobs:
       - name: Deploy Preview to Vercel
         id: deploy
         run: |
-          DEPLOY_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          # --archive=tgz: prerendering ~1,000 routes puts the .next output over
+          # Vercel's 15,000-file upload limit ("files should NOT have more than
+          # 15000 items").
+          DEPLOY_URL=$(vercel deploy --prebuilt --archive=tgz --token=${{ secrets.VERCEL_TOKEN }})
           echo "deploy_url=$DEPLOY_URL" >> $GITHUB_OUTPUT
 
       - name: Comment PR
