@@ -68,7 +68,12 @@ export async function generateMetadata({ params }: LayoutParams): Promise<Metada
       },
     },
     icons: {
-      icon: "/favicon.ico",
+      // /favicon.ico does not exist (nightly lychee flagged it on every page).
+      icon: [
+        { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+        { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      ],
+      shortcut: "/icon-192.png",
       apple: "/apple-touch-icon.png",
     },
     openGraph: {
