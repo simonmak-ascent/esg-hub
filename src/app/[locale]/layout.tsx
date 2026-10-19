@@ -119,7 +119,10 @@ export default async function LocaleLayout({
     <html lang={locale === "zh" ? "zh-Hans" : locale === "hk" ? "zh-Hant-HK" : "en-GB"} data-theme="light" className={fontVariables}>
       <body>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
-        <NextIntlClientProvider messages={messages}>
+        {/* Pass locale explicitly: without it next-intl resolves the locale
+            from request headers inside the provider, which opts every page out
+            of static rendering (the reason every route built as ƒ). */}
+        <NextIntlClientProvider locale={locale} messages={messages}>
           <Header />
           <main id="main-content" tabIndex={-1}>{children}</main>
           <Footer />

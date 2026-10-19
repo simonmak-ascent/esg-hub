@@ -2,9 +2,6 @@ import { getPageByPermalink } from "@/lib/pages";
 import MarkdownContent from "@/components/MarkdownContent";
 import Link from "next/link";
 import HomeSearchBox from "@/components/HomeSearchBox";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import ClientRedirect from "@/components/ClientRedirect";
 import { getTranslations } from "next-intl/server";
 
 const HOMEPAGE_SECTION_KEYS = [
@@ -40,21 +37,15 @@ export default async function HomePage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const headersList = await headers();
-  const hostname = headersList.get("x-forwarded-host") || headersList.get("host") || "";
-  
+  // No headers() here: it opts the homepage out of static rendering. The
+  // esg.video -> /videos redirect lives in src/middleware.ts (and vercel.json).
   const t = await getTranslations({ locale, namespace: "Home" });
 
-  if (hostname === "esg.video" || hostname === "www.esg.video" || hostname.endsWith(".esg.video")) {
-    redirect("/videos");
-  }
-  
   const pageResult = await getPageByPermalink("/", locale);
   const page = pageResult === "db_error" ? null : pageResult;
 
   return (
     <>
-      <ClientRedirect />
       <div
         style={{
           background: "var(--apf-color-surface-hero)",
