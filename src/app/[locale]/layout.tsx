@@ -1,5 +1,5 @@
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages, getTranslations } from "next-intl/server";
+import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { Open_Sans, Raleway } from "next/font/google";
 import { routing } from "@/i18n/routing";
@@ -32,6 +32,7 @@ interface LayoutParams {
 
 export async function generateMetadata({ params }: LayoutParams): Promise<Metadata> {
   const { locale } = await params;
+  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "Metadata" });
   
   return {
@@ -111,8 +112,13 @@ export default async function LocaleLayout({
     notFound();
   }
 
-  // Pass the locale explicitly: without it next-intl resolves the locale from
-  // request headers, which opts every page out of static rendering.
+  // next-intl otherwise reads the locale from the `x-next-intl-locale` request
+  // header, and reading headers opts the whole subtree into dynamic rendering.
+  // setRequestLocale pins the locale for this render so pages can be static.
+  setRequestLocale(locale);
+
+  // Pass the locale explicitly as well: both the request config and the client
+  // provider can otherwise fall back to the request-scoped header.
   const messages = await getMessages({ locale });
 
   return (

@@ -2,7 +2,7 @@ import { getPageByPermalink } from "@/lib/pages";
 import MarkdownContent from "@/components/MarkdownContent";
 import Link from "next/link";
 import HomeSearchBox from "@/components/HomeSearchBox";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 
 const HOMEPAGE_SECTION_KEYS = [
   { href: "/environmental", key: "environmental" },
@@ -37,6 +37,7 @@ export default async function HomePage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  setRequestLocale(locale);
   // No headers() here: it opts the homepage out of static rendering. The
   // esg.video -> /videos redirect lives in src/middleware.ts (and vercel.json).
   const t = await getTranslations({ locale, namespace: "Home" });

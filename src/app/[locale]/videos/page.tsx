@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import Link from "next/link";
 import Image from "next/image";
 import { queryHttp } from "@/lib/surrealdb";
@@ -12,6 +12,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
+  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "Videos" });
   
   const path = locale === "en" ? "/videos" : `/${locale}/videos`;
@@ -139,6 +140,7 @@ async function getVideoReferencingPages(): Promise<
 
 export default async function VideosPage({ params }: Props) {
   const { locale } = await params;
+  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "Videos" });
   const tNav = await getTranslations({ locale, namespace: "Navigation" });
   const tCommon = await getTranslations({ locale, namespace: "Common" });
