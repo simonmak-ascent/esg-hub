@@ -1,8 +1,6 @@
 name: KM R&D Verification Loop
 
 on:
-  schedule:
-    - cron: "13 4 * * *" # 04:13 UTC daily
   workflow_dispatch: {}
 
 permissions:
