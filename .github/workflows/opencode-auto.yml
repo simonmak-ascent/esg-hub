@@ -2,8 +2,6 @@ name: opencode-auto
 on:
   issues:
     types: [opened]
-  schedule:
-    - cron: "*/30 * * * *"
   workflow_dispatch:
 
 jobs:
