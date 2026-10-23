@@ -20,7 +20,22 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 308);
   }
 
-  return intlMiddleware(request);
+  const response = intlMiddleware(request);
+
+  // next-intl rewrites "/" to an absolute URL built from the incoming request
+  // (e.g. http://localhost:3210/en). Behind the ALB + Caddy that absolute form
+  // is treated as an external self-proxy, which loops over http and fails with
+  // EPROTO over https. A relative rewrite is applied internally instead.
+  const rewrite = response.headers.get("x-middleware-rewrite");
+  if (rewrite) {
+    const target = new URL(rewrite);
+    response.headers.set(
+      "x-middleware-rewrite",
+      `${target.pathname}${target.search}`
+    );
+  }
+
+  return response;
 }
 
 export const config = {
