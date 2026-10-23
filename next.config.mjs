@@ -5,6 +5,12 @@ const withNextIntl = createNextIntlPlugin();
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
+  // Behind the ALB + Caddy the standalone server otherwise builds request URLs
+  // from the socket address (localhost:3210), so next-intl's "/" -> "/en"
+  // rewrite becomes an absolute self-proxy and the default locale loops.
+  experimental: {
+    trustHostHeader: true,
+  },
   transpilePackages: ["@simonmak-ascent/esg-hub-mcp"],
   reactStrictMode: true,
   async redirects() {
