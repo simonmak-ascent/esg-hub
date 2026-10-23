@@ -20,22 +20,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      # The GitHub SURREAL_* secrets are stale (signin returns InvalidAuth).
-      # The Vercel production environment holds the working values, so pull it
-      # and source it instead of trusting the repo secrets.
-      - name: Pull Vercel environment
-        run: npx --yes vercel@latest pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-      - name: Load the pulled environment
-        run: node scripts/load-vercel-env.mjs
-
-      - name: Verify database schema
-        id: verify_db
-        run: node scripts/verify-db-schema.mjs
-
       - name: Production health probe
         id: health
         run: |
@@ -71,10 +55,10 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           DATE=$(date -u +"%Y-%m-%d %H:%M")
-          if [ "${{ steps.verify_db.outcome }}" = "failure" ] || [ "${{ steps.smoke.outcome }}" = "failure" ]; then
+          if [ "${{ steps.health.outcome }}" = "failure" ] || [ "${{ steps.smoke.outcome }}" = "failure" ]; then
             TYPE="HARD"
             FAILED=""
-            [ "${{ steps.verify_db.outcome }}" = "failure" ] && FAILED="verify:db"
+            [ "${{ steps.health.outcome }}" = "failure" ] && FAILED="health"
             [ "${{ steps.smoke.outcome }}" = "failure" ] && FAILED="$FAILED smoke"
             DETAILS="Failing check(s):$FAILED"
           else
@@ -92,7 +76,7 @@ jobs:
           fi
 
       - name: Close health issue on clean run
-        if: success() && steps.verify_db.outcome == 'success' && steps.smoke.outcome == 'success' && steps.lychee.outcome == 'success'
+        if: success() && steps.health.outcome == 'success' && steps.smoke.outcome == 'success' && steps.lychee.outcome == 'success'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -106,6 +90,9 @@ jobs:
 
   eval-pipeline:
     name: "Pipeline Evaluation"
+    # Disabled: the Vercel project was retired and the production DB environment
+    # is not available to GitHub Actions. Re-enable with a non-Vercel env source.
+    if: false
     runs-on: ubuntu-latest
     continue-on-error: true
     timeout-minutes: 10
@@ -128,15 +115,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Pull Vercel environment
-        run: npx --yes vercel@latest pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-      - name: Load the pulled environment
-        run: node scripts/load-vercel-env.mjs
 
       - name: Run pipeline evaluation
         run: pnpm eval-pipeline
