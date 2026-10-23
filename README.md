@@ -88,6 +88,8 @@ resources; `page`, `section` and `embedding` are the core SurrealDB tables.
 
 ## Deployment
 
+Production runs on the ecs-01/02/03 HA fleet.
+
 Production is served by **ecs-05** (`:3210`) behind Caddy; the former Vercel project was retired. See `apg-infra` for the fleet deployment.
 
 ```mermaid
