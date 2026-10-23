@@ -4,7 +4,7 @@
 
 > **An open-access encyclopedia of Environmental, Social, and Governance (ESG) knowledge by [Ascent Partners Foundation](https://www.ascent.partners)** — 350+ articles, 240+ curated resources, books, courses, AI search, a public REST API, and an MCP server. Available in English, Simplified Chinese, and Traditional Chinese (Hong Kong).
 
-[![Deploy to Vercel](https://github.com/simonmak-ascent/esg-hub/actions/workflows/deploy.yml/badge.svg)](https://github.com/simonmak-ascent/esg-hub/actions/workflows/deploy.yml)
+[![CI](https://github.com/simonmak-ascent/esg-hub/actions/workflows/ci.yml/badge.svg)](https://github.com/simonmak-ascent/esg-hub/actions/workflows/ci.yml)
 [![MCP Registry](https://img.shields.io/badge/MCP%20Registry-com.ascent-partners%2Fesg-hub-4CAF50)](https://registry.modelcontextprotocol.io/v0/servers?search=com.ascent-partners/esg-hub)
 [![Glama](https://glama.ai/mcp/connectors/com.ascent-partners/esg-hub/badges/score.svg)](https://glama.ai/mcp/connectors/com.ascent-partners/esg-hub)
 [![License: MIT (code)](https://img.shields.io/badge/code-MIT-yellow.svg)](LICENSE)
@@ -30,7 +30,7 @@ flowchart TB
   WEB --> AI["DeepSeek + Brave Search<br/>grounded answers"]
   WEB --> API["Public REST API · /api/v1"]
   API --> MCP["MCP server<br/>@simonmak-ascent/esg-hub-mcp"]
-  V["Vercel"] --> WEB
+  V["APG fleet · ecs-05"] --> WEB
 ```
 
 ## How a query is answered
@@ -88,17 +88,18 @@ resources; `page`, `section` and `embedding` are the core SurrealDB tables.
 
 ## Deployment
 
+Production is served by **ecs-05** (`:3210`) behind Caddy; the former Vercel project was retired. See `apg-infra` for the fleet deployment.
+
 ```mermaid
 flowchart LR
   DEV["git push / PR"] --> CI["GitHub Actions<br/>lint · test · e2e · health-check"]
-  CI --> PREV["Vercel Preview deployment"]
-  PREV -->|merge to main| PROD["Vercel Production<br/>esg-hub.ascent.partners"]
+  CI -->|merge to main| PROD["ecs-05 · Caddy :3210<br/>esg-hub.ascent.partners"]
   PROD --> SURF["/api/mcp · /api/v1<br/>MCP + REST surfaces"]
 ```
 
 ## Tech Stack
 
-Next.js 16 (App Router, React 19) · SurrealDB Cloud · Tailwind CSS v4 · next-intl · Vitest + Playwright · Vercel
+Next.js 16 (App Router, React 19) · SurrealDB Cloud · Tailwind CSS v4 · next-intl · Vitest + Playwright · APG fleet (ecs-05)
 
 ## Quick Start (≤ 5 minutes)
 
