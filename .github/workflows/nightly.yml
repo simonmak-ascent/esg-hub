@@ -15,7 +15,7 @@ env:
 
 jobs:
   health:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, apg-ci-04]
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -100,7 +100,7 @@ jobs:
 
   eval-pipeline:
     name: "Pipeline Evaluation"
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, apg-ci-04]
     continue-on-error: true
     timeout-minutes: 10
     steps:
