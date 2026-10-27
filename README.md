@@ -30,7 +30,7 @@ flowchart TB
   WEB --> AI["DeepSeek + Brave Search<br/>grounded answers"]
   WEB --> API["Public REST API · /api/v1"]
   API --> MCP["MCP server<br/>@simonmak-ascent/esg-hub-mcp"]
-  V["APG fleet · ecs-05"] --> WEB
+  V["APG ALB · esg-hub.ascent-partners.com"] --> WEB
 ```
 
 ## How a query is answered
@@ -88,20 +88,24 @@ resources; `page`, `section` and `embedding` are the core SurrealDB tables.
 
 ## Deployment
 
-Production runs on the ecs-01/02/03 HA fleet.
-
-Production is served by **ecs-05** (`:3210`) behind Caddy; the former Vercel project was retired. See `apg-infra` for the fleet deployment.
+Production runs on the ecs-01/02/03 HA fleet as the digest-pinned container declared in
+`container.json` — the image is the deployable, not a release tree on a node. The fleet runs it as
+a container on `:3210`, and no node runs a routing web server. The ALB terminates TLS and routes
+`esg-hub.ascent.partners` to the container's port. The former Vercel project was retired. See
+`apg-infra` for the fleet deployment.
 
 ```mermaid
 flowchart LR
   DEV["git push / PR"] --> CI["GitHub Actions<br/>lint · test · e2e · health-check"]
-  CI -->|merge to main| PROD["ecs-05 · Caddy :3210<br/>esg-hub.ascent.partners"]
+  CI -->|merge to main| IMG["digest-pinned image<br/>container.json"]
+  IMG -->|the image is the deployable| PROD["container · :3210"]
+  ALB["APG ALB · TLS termination"] -->|esg-hub.ascent.partners| PROD
   PROD --> SURF["/api/mcp · /api/v1<br/>MCP + REST surfaces"]
 ```
 
 ## Tech Stack
 
-Next.js 16 (App Router, React 19) · SurrealDB Cloud · Tailwind CSS v4 · next-intl · Vitest + Playwright · APG fleet (ecs-05)
+Next.js 16 (App Router, React 19) · SurrealDB Cloud · Tailwind CSS v4 · next-intl · Vitest + Playwright · APG fleet (containerised)
 
 ## Quick Start (≤ 5 minutes)
 
