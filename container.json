@@ -1,0 +1,25 @@
+{
+  "name": "esg-hub",
+  "repo": "simonmak-ascent/esg-hub",
+  "image": "ghcr.io/simonmak-ascent/esg-hub@sha256:ccd68555d1abaa4fe28c9638b905b1f21fec1ec43160612866597668381d6507",
+  "port": 3210,
+  "hosts": [
+    "esg-hub.ascent-partners.com",
+    "esg-hub.ascent.partners"
+  ],
+  "health": {
+    "path": "/api/health",
+    "host": "esg-hub.ascent-partners.com"
+  },
+  "run": {
+    "user": "994:994",
+    "network": "bridge",
+    "bind": "0.0.0.0",
+    "entrypoint": "exec"
+  },
+  "dataClass": "SurrealDB (external)",
+  "wave": 1,
+  "owner": "simonmak-ascent",
+  "notes": "Next.js standalone release copied into the image and run as `node server.js` with uid 994 (the esghub user the systemd unit used). The eleven credentials stay on the node in /etc/esg-hub/esg-hub.env and arrive through --env-file; Docker keeps quotes literally where systemd strips them, so a normalised copy is written to /run before the start. The prerender cache in .next/cache is container-local, so it rebuilds on restart \u2014 a deliberate consequence of the no-node-state rule. Published to GHCR and pinned by digest (2026-10-27, tag lean-test): 115 MB packed, against 326 MB for the first build, because .next/cache is dropped and the tree is copied once with --chown instead of twice.",
+  "exceptions": []
+}

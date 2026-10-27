@@ -1,6 +1,8 @@
 name: KM R&D Verification Loop
 
 on:
+  schedule:
+    - cron: "13 4 * * *" # 04:13 UTC daily
   workflow_dispatch: {}
 
 permissions:
@@ -34,16 +36,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # The GitHub SURREAL_* secrets are stale (signin returns InvalidAuth);
-      # the Vercel production environment has the working credentials.
-      - name: Pull Vercel environment
-        run: npx --yes vercel@latest pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-      - name: Load the pulled environment
-        run: node scripts/load-vercel-env.mjs
+      # The production environment is a repository secret. It used to be pulled
+      # from Vercel; that project no longer exists, so the secret is the source
+      # of truth. Create it from the node's /etc/esg-hub/<slot>.env.
+      - name: Write the production environment
+        run: printf '%s' "${{ secrets.PRODUCTION_ENV }}" > .env.production.local
 
       - name: Run KM R&D verification loop
         env:
