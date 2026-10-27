@@ -20,6 +20,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
+      # The production environment is a repository secret. It used to be pulled
+      # from Vercel; that project no longer exists, so the secret is the source
+      # of truth. Create it from the node's /etc/esg-hub/<slot>.env.
+      - name: Write the production environment
+        run: printf '%s' "${{ secrets.PRODUCTION_ENV }}" > .env.production.local
+
+      - name: Verify database schema
+        id: verify_db
+        run: node scripts/verify-db-schema.mjs
+
       - name: Production health probe
         id: health
         run: |
@@ -55,10 +65,10 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           DATE=$(date -u +"%Y-%m-%d %H:%M")
-          if [ "${{ steps.health.outcome }}" = "failure" ] || [ "${{ steps.smoke.outcome }}" = "failure" ]; then
+          if [ "${{ steps.verify_db.outcome }}" = "failure" ] || [ "${{ steps.smoke.outcome }}" = "failure" ]; then
             TYPE="HARD"
             FAILED=""
-            [ "${{ steps.health.outcome }}" = "failure" ] && FAILED="health"
+            [ "${{ steps.verify_db.outcome }}" = "failure" ] && FAILED="verify:db"
             [ "${{ steps.smoke.outcome }}" = "failure" ] && FAILED="$FAILED smoke"
             DETAILS="Failing check(s):$FAILED"
           else
@@ -76,7 +86,7 @@ jobs:
           fi
 
       - name: Close health issue on clean run
-        if: success() && steps.health.outcome == 'success' && steps.smoke.outcome == 'success' && steps.lychee.outcome == 'success'
+        if: success() && steps.verify_db.outcome == 'success' && steps.smoke.outcome == 'success' && steps.lychee.outcome == 'success'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -90,9 +100,6 @@ jobs:
 
   eval-pipeline:
     name: "Pipeline Evaluation"
-    # Disabled: the Vercel project was retired and the production DB environment
-    # is not available to GitHub Actions. Re-enable with a non-Vercel env source.
-    if: false
     runs-on: ubuntu-latest
     continue-on-error: true
     timeout-minutes: 10
@@ -115,6 +122,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Write the production environment
+        run: printf '%s' "${{ secrets.PRODUCTION_ENV }}" > .env.production.local
 
       - name: Run pipeline evaluation
         run: pnpm eval-pipeline
