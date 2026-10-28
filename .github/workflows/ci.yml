@@ -19,7 +19,7 @@ env:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, apg-ci-04]
     timeout-minutes: 20
     steps:
       - name: Checkout code
@@ -61,7 +61,7 @@ jobs:
 
   eval-search:
     name: "Search Evaluation"
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, apg-ci-04]
     needs: validate
     if: always()
     continue-on-error: true

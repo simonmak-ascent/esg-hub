@@ -21,7 +21,7 @@ env:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, apg-ci-04]
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -52,7 +52,7 @@ jobs:
         run: npx vitest run
 
   e2e:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, apg-ci-04]
     needs: check
     if: ${{ !inputs.skip_e2e }}
     steps:
