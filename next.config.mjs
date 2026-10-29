@@ -43,6 +43,22 @@ const nextConfig = {
       },
     ],
   },
+  // HSTS is the origin's job: the balancer cannot add a response header (its
+  // `InsertHeader` action writes into the request toward the backend). One
+  // header for every route, including the API and MCP surfaces.
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+        ],
+      },
+    ];
+  },
   serverExternalPackages: [
     "onnxruntime-node",
     "sharp",
