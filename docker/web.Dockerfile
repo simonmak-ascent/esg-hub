@@ -26,7 +26,11 @@ USER 994:994
 
 EXPOSE 3210
 
-HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
-  CMD wget -q --spider http://127.0.0.1:3210/api/health || exit 1
+# Exec form, no shell in the middle, and a timeout that is generous compared with the 130 ms the
+# endpoint actually takes. The previous form was `CMD wget … || exit 1` with a 3 s timeout: when the
+# timeout fired, docker killed the shell and the in-flight `wget` was reparented to PID 1 — which is
+# node, which never calls wait() — leaving a zombie. 81 of them accumulated across three nodes.
+HEALTHCHECK --interval=15s --timeout=10s --start-period=10s --retries=3 \
+  CMD ["wget", "-q", "--spider", "http://127.0.0.1:3210/api/health"]
 
 CMD ["node", "server.js"]
