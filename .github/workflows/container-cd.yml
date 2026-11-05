@@ -45,9 +45,15 @@ jobs:
 
       - name: assemble build context
         run: |
+          # next.config.mjs sets output: "standalone", so the runnable tree is .next/standalone —
+          # it contains server.js and the traced node_modules. Copying .next wholesale (the first
+          # version of this workflow) produces an image that starts and immediately exits.
           mkdir -p docker/current
-          cp -a .next public package.json node_modules docker/current/
-          cp server.js docker/current/ 2>/dev/null || true
+          cp -a .next/standalone/. docker/current/
+          mkdir -p docker/current/.next
+          cp -a .next/static docker/current/.next/static
+          cp -a public docker/current/public
+          test -f docker/current/server.js
           du -sh docker/current
 
       - uses: docker/setup-buildx-action@v3
