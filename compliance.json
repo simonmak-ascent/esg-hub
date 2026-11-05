@@ -8,7 +8,7 @@
   ],
   "deploy": {
     "kind": "none",
-    "reason": "the web container is built and started by hand on ecs-02/03/04 (see docker/run.sh); this repository has no deploy workflow, which is why a container fix could sit uncommitted while production was patched in place"
+    "reason": "deploy is pull-based: .github/workflows/container-cd.yml publishes ghcr.io/simonmak-ascent/esg-hub, and each node converges on esg-hub-converge.timer via deploy/container/converge.sh. No runner is registered for this repository and the nodes are private, so there is no push-based workflow to name here."
   },
   "e2e": [
     {

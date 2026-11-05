@@ -1,0 +1,11 @@
+[Unit]
+Description=Converge the esg-hub container to the published image
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=30s
+Unit=esg-hub-converge.service
+
+[Install]
+WantedBy=timers.target
