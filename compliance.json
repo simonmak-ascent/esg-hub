@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "default_branch": "main",
+  "merge": "pr-required",
+  "verify": [
+    "pnpm install --frozen-lockfile",
+    "pnpm build"
+  ],
+  "deploy": {
+    "kind": "none",
+    "reason": "the web container is built and started by hand on ecs-02/03/04 (see docker/run.sh); this repository has no deploy workflow, which is why a container fix could sit uncommitted while production was patched in place"
+  },
+  "e2e": [
+    {
+      "probe": "http://127.0.0.1:3210/api/health",
+      "expect": 200
+    }
+  ]
+}
