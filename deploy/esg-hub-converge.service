@@ -1,0 +1,13 @@
+[Unit]
+Description=esg-hub container convergence (pull the published image and swap it in)
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+Environment=ESG_HUB_IMAGE=ghcr.io/simonmak-ascent/esg-hub:latest
+Environment=ESG_HUB_ENV=/etc/esg-hub/esg-hub.env
+ExecStart=/opt/esg-hub/deploy/container/converge.sh
+# A failed convergence must not leave the previous container down: converge.sh creates the
+# replacement first and only removes the old one after the health gate passes.
+TimeoutStartSec=300

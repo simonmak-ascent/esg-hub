@@ -1,0 +1,90 @@
+name: container-cd
+
+# Build the web image and publish it to GHCR. This workflow does NOT touch a node: the nodes are
+# private, so a GitHub-hosted runner cannot reach them, and no self-hosted runner is registered for
+# this repository. Convergence is pulled by each node on a timer (deploy/container/converge.sh).
+#
+# That split is deliberate. The previous state had no deploy path at all, which is how a production
+# container fix could be applied in place while nothing reached git.
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+concurrency:
+  group: container-cd-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # The Dockerfile expects a built `current/` tree: the image copies it into /app. Building here
+      # rather than on a node keeps CPU off the servers that also serve traffic.
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: install
+        run: pnpm install --frozen-lockfile
+      - name: build
+        run: pnpm build
+
+      - name: assemble build context
+        run: |
+          mkdir -p docker/current
+          cp -a .next public package.json node_modules docker/current/
+          cp server.js docker/current/ 2>/dev/null || true
+          du -sh docker/current
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=sha,format=long
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: docker
+          file: docker/web.Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: summary
+        run: |
+          {
+            echo "### published"
+            echo ""
+            echo '```'
+            echo "${{ steps.meta.outputs.tags }}"
+            echo '```'
+            echo ""
+            echo "Nodes converge within one timer interval: \`systemctl list-timers esg-hub-converge\`."
+          } >> "$GITHUB_STEP_SUMMARY"
