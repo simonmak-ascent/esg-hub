@@ -31,7 +31,7 @@ jobs:
 
       # The Dockerfile expects a built `current/` tree: the image copies it into /app. Building here
       # rather than on a node keeps CPU off the servers that also serve traffic.
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 10
       - uses: actions/setup-node@v4
